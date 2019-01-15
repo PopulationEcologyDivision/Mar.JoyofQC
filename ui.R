@@ -1,0 +1,35 @@
+library(shiny)
+library(ggplot2)
+ui<-navbarPage(div(id="logodiv",img(src="logo.PNG", height=100)), id = "inTabset"
+               ,inverse = FALSE
+               , tabPanel("Select Data"
+                          ,htmlOutput("dataSel")
+                          ,htmlOutput("rObjSel")
+                          ,htmlOutput("fBrowse")
+                          ,htmlOutput("OcredUsePkg")
+                          ,htmlOutput("OcredName")
+                          ,htmlOutput("OcredPass")
+                          ,htmlOutput("OcredDSN")
+                          ,htmlOutput("OcredSubmit")
+                          ,htmlOutput("Oschema")
+                          ,htmlOutput("Otable")
+                          ,htmlOutput("xaxis")
+                          ,htmlOutput("yaxis")
+                          ,htmlOutput("facet")
+                          ,textOutput("loadstatus")
+                          ) 
+               ,tabPanel("Results"
+                         ,htmlOutput("editOptions")
+                         ,plotOutput(outputId = "distPlot", brush = brushOpts(id = 'brush'))
+                         ,htmlOutput("facetOptions")
+                         ,dataTableOutput("selTable"))
+               , tabPanel("Help"
+                          ,htmlOutput("getHelp")
+                          ) 
+               ,footer =tagList(hr()
+                                ,div("For assistance with this app, please see ",actionLink("showHelp","the help tab"), "the help, visit ", a("the wiki", href = "http://www.google.com"), "or contact ", a("Mike McMahon", href = "mailto:Mike.McMahon@dfo-mpo.gc.ca"))
+               )
+               ,tags$head(
+                 tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
+               )
+)

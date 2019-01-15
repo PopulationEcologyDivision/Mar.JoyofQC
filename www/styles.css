@@ -1,0 +1,23 @@
+body {
+   font-family: "Trebuchet MS", Helvetica, sans-serif; 
+   margin:0;
+}
+#editOptions {
+  margin:10;padding:0;display:inline-block;width:100%;vertical-align: text-top;background-color:lightblue;
+}
+.navbar {
+    margin:0;padding:0;display:block;height:120px;
+}
+h4{
+  margin:3;
+  padding:0;
+}
+.container-fluid {
+   margin:0;padding:0;display:block;
+}
+.row {
+  margin:0;padding:0;display:block;
+}
+#facetOptions {
+border-style:solid;border-color:lightblue;display:inline-block;width:100%;vertical-align: text-top;background-color:lightblue;
+}
