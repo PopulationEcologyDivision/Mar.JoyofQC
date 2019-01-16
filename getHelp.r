@@ -1,13 +1,64 @@
 getHelp<-function(){
-  return(tagList(h3('What is "Mar.JoyofQC"?')
-                 ,p("This is an app that facilitates the visualization of data.  It helps users identify and flag outliers in their r, csv and oracle datasets.")
-                 ,h4("Select Data")
-                 ,p('The data to be examined is chosen within the "Select Data" tab.  It can be either a local R object, a csv on your computer, or an Oracle table you already have access to.')
-                 ,p('If you choose a csv or an r object, you will be prompted to select it.  If you are working with Oracle, you will first need to provide your Oracle credentials, then you will choose from the schema(s) you have access to, and then select one of the tables from within that schema.')
-                 ,p("Once you've selected a dataset, 3 new dropdown boxes will appear, and each will be populated with all of the fields available from the dataset.  These include the options for choosing the x-axis and y-axis of the ensuing plots. Additionally, you can select an (optional) 'facet' field.  By faceting the data, you will generate a seperate plot for each unique value in the facet field.  For example, you might choose to plot 'length' vs 'weight' (as the x and y axes), but then elect to the facet the plots by 'species'.  The would results in a seperate length vs weight plot for each species.")
-                 ,h4("Results")
-                 ,p("This is the meat of the application, and the place where you data will be displayed in graphical format. At the top of the page will be some tools that allow you to interact with the plots.  Below that is one or more plots of the data (depending on whether or not you elect to facet your data).  At the bottom is a table that gets populated with the data you've selected")
-                 ,h5("Plot Tools")
-                 ,p("The plots are dynamic, in that you can draw boxes on them to select sets of data.  The first row of tools work on the selections you make, and allow you to flag them as 'good' or 'bad', and (optionally) add a comment describing why you feel that way. Additionally, selected data can simply be hidden rather than have a QC status applied. The second row of tools relates to saving the results of your QC session, and allows you to save either the entire dataset, or just the records you have flagged as good or bad.  Lastly, depending on the facet selections, you may get a warning that too many plots will be generated to be useful.  Should this be the case, a button will be presented allowing users to override the warning and show al of the plots regardless.")
-                 ))
+  return(tagList(div(id = "helpText", h3('What is "Mar.JoyofQC"?')
+                 ,p("This is a Shiny app that facilitates the visualization of data.  
+                    It's purpose is to support the identification and flagging 
+                    of outliers in r objects, *.csv files and oracle tables.")
+                 ,h4("How do I See My Data?")
+                 ,p("On the left, there are controls for selecting and working with
+                    datasets. As you make choices, additional, relevant options
+                    will become available.  Datasets can be local R objects, csv files on your 
+                    computer, or Oracle tables you already have access to.  If you 
+                    choose a csv or an r object, you will be prompted to select it.  
+                    If you are working with Oracle, you will first need to provide 
+                    your Oracle credentials, then you will choose from the schema(s) 
+                    you have access to, and then select one of the tables from within 
+                    that schema.")
+                  ,p("Regardless of the datasource selected, 3 options become 
+                    available - 'x-axis', 'y-axis' and 'facet'.  X- and y-axis 
+                    selections simply control which field is plotted against which 
+                    other field.   Selecting a field to facet by results in the grouping 
+                    of data by shared values from the facet field.  For example, 
+                    you might choose to plot 'length' vs 'weight' (as the x and 
+                    y axes), but then facet the plots by 'species'.  The would 
+                    result in a separate length vs weight plot for each species.")
+                 ,h4("How Can I QC My Data?")
+                 ,p("As soon as you have selected an x- and y-axis, your data will 
+                  be plotted (and if you choose to facet your data, you will see 
+                  multiple plots).  The plots are dynamic, in that you can draw 
+                  boxes on them to select sets of data.  The underlying values of the selected data is 
+                  always shown below the plot(s).The first row of tools at the 
+                  top of the page work on the selected data, and allow you to flag data as
+                  'good' or 'bad', and (optionally) add a comment describing why 
+                  you feel that way.  The QC_STATUS (i.e. good or bad) and the 
+                  values for QC_COMMENT will all be included in your output.")
+                 ,p("Additionally, selected data can simply be hidden rather than 
+                  having a QC status applied. This can be useful if the presence 
+                  of some data if causing the majority of the data to be 'squashed' 
+                  near the origin.  Choosing to hide the data doesn't apply a QC 
+                  status, but simply results in a button appearing that will allow
+                  you to unhide the data.")
+                 ,h4("How Can I Save My Work?")
+                 ,p("The second row of tools above the plot(s) relate to saving 
+                  the results of your QC session, and allow you to save every record 
+                  (plus the additional columns 'QC_STATUS' and 'QC_COMMENT'), or 
+                  just the records you have flagged as good or bad in QC_STATUS.
+                  If possible, not all columns will be saved - if there is a unique 
+                  field in your data, it alone will be saved with the QC results.  
+                  The purpose of this application is not to generate new datasets, 
+                  but to allow you to go back to original datasets and fix values 
+                  there.  Data is saved both as an R object to local environment, 
+                  as well as a csv to your working directory.") 
+                 ,h4("Facet Notes")
+                 ,p("Depending on the facet selections, you may get a warning that 
+                  too many plots will be generated to be useful (i.e. more than 20).  
+                  Should this be the case, a button will be presented allowing you 
+                  to override the warning and show all of the plots regardless. 
+                  If you decide to view all of the plots, another button will replace 
+                  the warning that will allow you to easilt 'de-facet your data.")
+                 )
+                 ,h4("I Need More Help!")
+                 ,p("For assistance with this app, please contact ", a("Mike McMahon", href = "mailto:Mike.McMahon@dfo-mpo.gc.ca"))
+                 ,p("This is my first Shiny app, so please be gentle.")
+  )
+  )
 }

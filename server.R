@@ -7,43 +7,28 @@ server <- function(input, output, session) {
   .GlobalEnv$limitPlots = 20
   .GlobalEnv$Oschema <- "None"
   .GlobalEnv$Otable <- "None"
-  qcprompt = "QC Comment (optional)"
+  .GlobalEnv$qcprompt = "QC Comment (optional)"
   
   source("getHelp.R")
   
   output$getHelp<-renderUI({
     getHelp()
   })
-  # "faithful"="faithful",
-  # "mtcars"="mtcars",
-  # "pressure"="pressure",
+  
   output$dataSel<-renderUI({
     selectInput("dataSel", label ="Select some data",
                 choices=c("None"="None",
                           "local csv" = "csvobject",
                           "local r object" = "robject",
-                          "oracle" = "oracle"))
+                          "oracle" = "oracle",
+                          "sample data"="faithful"))
   })
   
-  output$editOptions<-renderUI({
-    #these tags are here instead of UI so they can be on one line
-    div(div(style="display:inline-block;float:both"
-            , radioButtons(inputId = 'qcAction', label = "",
-                           #choiceNames = list("Mark as 'Good'","Mark as 'Bad'","Hide"),
-                           choiceNames = list( icon('thumbs-up'),icon('thumbs-down'),icon('eye-slash')),
-                           choiceValues = list("good","bad","ugly"), inline=T))
-        , div(style="display:inline-block;float:both",textInput(inputId = "selDet", label = "",value = qcprompt))
-        , div(style="display:inline-block;float:both",actionButton('handleSelect', 'Apply Options'))
-        , div("  |  ",style="display:inline-block;float:both",actionButton(inputId = 'unhide', label = 'Unhide All', icon = icon('eye')))
-        ,div(style="clear:both")
-        , div(style="display:inline-block;float:both",radioButtons(inputId = 'saveAction', label = "",
-                                                                   choiceNames = list("All","Flagged Data Only"),
-                                                                   choiceValues = list("saveAll","saveFlagged"), inline=T))
-        , div(style="display:inline-block;float:both",actionButton(inputId = 'saveDet', label = 'Save Data', icon = icon('save')))
-          ,div(style="display:inline-block;float:both", textOutput('saveMsg'))
-        ,div(style="clear:both")
-    )
-  })
+  #these tags are here instead of UI because they're dynamic
+  output$selDet = renderUI(textInput(inputId = "selDet", label = "",value = .GlobalEnv$qcprompt))
+  output$unhide = renderUI("")
+  output$saveMsg = renderUI(textOutput('saveMsg'))
+  
   populateDrops<-function(){
     if (!is.null(.GlobalEnv$dataObjFields)){
       if (length(.GlobalEnv$dataObjFields)<2){
@@ -63,7 +48,6 @@ server <- function(input, output, session) {
     
     ##########
     #this area is just for setting ui boxes to NUll - other logic is below
-    #test - try an initial bit that just nullifies irrelevant fields
     output$xaxis = NULL
     output$yaxis = NULL
     output$facet = NULL
@@ -150,7 +134,6 @@ server <- function(input, output, session) {
         return(.GlobalEnv$thisCxn)
       }
       showSchemaPick<-function(){
-        #schemas = .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,"SELECT DISTINCT OWNER FROM all_tables ORDER BY OWNER")
         schemas = .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("select distinct(table_schema) OWNER from all_tab_privs WHERE GRANTEE = '",toupper(input$OcredName),"' ORDER BY OWNER"))
         output$Oschema <- renderUI(selectInput("Oschema",
                                                label = "Select a schema",
@@ -159,7 +142,6 @@ server <- function(input, output, session) {
         return(NULL)
       }
       showTablePick<-function(){
-        #tbls = .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("SELECT DISTINCT TABLE_NAME FROM all_tables where OWNER = '",input$Oschema,"' ORDER BY TABLE_NAME"))
         tbls = .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("select TABLE_NAME from all_tab_privs WHERE table_schema = '",input$Oschema,"' AND GRANTEE = '",toupper(input$OcredName),"' ORDER BY TABLE_NAME"))
         output$Otable = renderUI(selectInput("Otable",
                                              label = "Select a table",
@@ -185,6 +167,7 @@ server <- function(input, output, session) {
         dataSelToLoad <- .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("SELECT * FROM ",input$Oschema,".",input$Otable))
       }
     }
+    
     if (is.null(dataSelToLoad)) {return()}
     dataSelToLoad$QC_STATUS <-"UNASSESSED"
     dataSelToLoad$QC_COMMENT <-NA
@@ -248,10 +231,10 @@ server <- function(input, output, session) {
   })
   
   observeEvent(
-    input$handleSelect, {
-      
+    input$handleSelect
+    , {
       thisData = .GlobalEnv$dataObj
-      comm = ifelse(input$selDet==qcprompt,NA, input$selDet)
+      comm = ifelse(input$selDet==.GlobalEnv$qcprompt,NA, input$selDet)
       selected <- selected()
       if (input$qcAction == "good"){
         thisData[rownames(thisData) %in% rownames(selected),"QC_STATUS"]<-"GOOD"
@@ -263,12 +246,32 @@ server <- function(input, output, session) {
         thisData[rownames(thisData) %in% rownames(selected),"QC_HIDDEN"]<-TRUE
       }
       thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"]<-comm
+      updateTextInput(session, "selDet", label = NULL, value = .GlobalEnv$qcprompt)
+      
+      if (nrow(thisData[thisData$QC_HIDDEN ==TRUE,])>0){
+        output$unhide = renderUI(actionButton(inputId = 'unhide', label = 'Unhide All', icon = icon('eye')))
+      }else{
+        output$unhide = renderUI("")
+      }
+      
       assign("dataObj",thisData,envir = .GlobalEnv)
       session$resetBrush("brush")
     })
   
+  
+  observeEvent(
+    input$unhide
+    , {
+      thisData = .GlobalEnv$dataObj
+      thisData[thisData$QC_HIDDEN ==TRUE,"QC_HIDDEN"]<-FALSE
+      assign("dataObj",thisData,envir = .GlobalEnv)
+      output$unhide = renderUI("")
+    })
+  
+  
   observeEvent(
     input$saveDet,{
+      browser()
       ts = format(Sys.time(), "%Y%m%d_%H%M")
       thisData = .GlobalEnv$dataObj
       thisData = thisData[, !names(thisData) %in% c("QC_HIDDEN")] 
@@ -297,6 +300,7 @@ server <- function(input, output, session) {
   
   observeEvent(
     input$facetOverride,{
+      #browser()
       if (.GlobalEnv$limitPlots ==20){
         assign("limitPlots", 500, envir = .GlobalEnv)
       }else{
@@ -304,10 +308,16 @@ server <- function(input, output, session) {
       }
     }
   )
+  observeEvent(
+    input$facetRemover,{
+      assign("limitPlots", 20, envir = .GlobalEnv)
+      output$facet = renderUI(selectInput("facet", "Select a field to facet by", choices = c("None",.GlobalEnv$dataObjFields), selected = "None", multiple = FALSE))
+    }
+  )
   
   observeEvent(input$showHelp, {
-      updateTabsetPanel(session, "inTabset",
-                        selected = "Help")
+    updateTabsetPanel(session, "inTabset",
+                      selected = "Help")
   })
   
   selected <- reactive({
@@ -321,7 +331,31 @@ server <- function(input, output, session) {
     return(brushed)
   })
   
-  
+  facetChecker<-function(nfacets = 1){
+    res = "OK"
+    if (nfacets == 1){
+      output$facetOptions <- NULL
+    }else if (nfacets<=.GlobalEnv$limitPlots){
+      output$facetOptions <-
+        renderUI({
+          #these tags are here instead of UI so they can be on one line
+          div(div(style="display:inline-block;float:both",actionButton(inputId = 'facetRemover', label = paste0("Remove faceting"), icon = icon('layer-group')))
+              ,div(style="clear:both")
+          )
+        })
+    } else if (nfacets>.GlobalEnv$limitPlots){
+      output$facetOptions <-
+        renderUI({
+          #these tags are here instead of UI so they can be on one line
+          div(div(style="display:inline-block;float:both", paste(nfacets, ' has ',nfacets,' unique values.  Perhaps too many to usefully facet by and QC?'))
+              , div(style="display:inline-block;float:both",actionButton(inputId = 'facetOverride', label = paste0("Thanks, 'Dad', show all ",nfacets,"(!) plots"), icon = icon('layer-group')))
+              ,div(style="clear:both")
+          )
+        })
+      res = "warn"
+    }
+    return(res)
+  }
   makePlot<-function(){
     input$facetOverride
     input$handleSelect
@@ -330,34 +364,14 @@ server <- function(input, output, session) {
     thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
     x <- thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][!is.na(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$xaxis]),input$xaxis]
     y <- thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][!is.na(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$yaxis]),input$yaxis]
+    nfacets = ifelse(input$facet == 'None',1,length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet])))
+    facetCheck = facetChecker(nfacets)
+    if (facetCheck=="warn")return(NULL)
     thePlot <- ggplot(data = thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),], 
                       aes(color = QC_STATUS,shape = QC_STATUS,
                           x=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$xaxis], 
                           y=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$yaxis])) + geom_point() + xlab(input$xaxis) + ylab(input$yaxis) + scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED")) 
-    if(!input$facet == 'None') {
-      nFacets = length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet]))
-      if (nFacets<= .GlobalEnv$limitPlots){ 
-        thePlot <- thePlot + facet_wrap(as.formula(paste('~', input$facet)))
-        if (nFacets>20){
-          output$facetOptions <-
-            renderUI({
-              #these tags are here instead of UI so they can be on one line
-              div(div(style="display:inline-block;float:both",actionButton(inputId = 'facetOverride', label = paste0("Remove faceting"), icon = icon('layer-group')))
-                  ,div(style="clear:both")
-              )
-            })
-        }
-      } else if (nFacets>.GlobalEnv$limitPlots){
-        output$facetOptions <- 
-          renderUI({
-            #these tags are here instead of UI so they can be on one line
-            div(div(style="display:inline-block;float:both", paste(input$facet, ' has ',nFacets,' unique values.  Perhaps too many to usefully facet by and QC?'))
-                , div(style="display:inline-block;float:both",actionButton(inputId = 'facetOverride', label = paste0("Thanks, 'Dad', show all ",nFacets,"(!) plots"), icon = icon('layer-group')))
-                ,div(style="clear:both")
-            )
-          })
-      }
-    }
+    if(!input$facet == 'None') thePlot <- thePlot + facet_wrap(as.formula(paste('~', input$facet)))
     thePlot
   }
   makeSelDataTable<-function(){
@@ -372,12 +386,14 @@ server <- function(input, output, session) {
     tableData = tableData[, !names(tableData) %in% c("QC_HIDDEN")] 
     return(tableData)
   }
-  
   output$distPlot <- renderPlot({
+    req(input$xaxis, input$yaxis)
     if (is.null(.GlobalEnv$dataObj))return()
+    if (input$xaxis == input$yaxis)return()
     makePlot()
   })
   output$selTable <- renderDataTable({
+    req(input$xaxis, input$yaxis)
     if (is.null(.GlobalEnv$dataObj))return()
     makeSelDataTable()
   })

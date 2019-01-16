@@ -3,11 +3,11 @@ body {
    margin:0;
 }
 #editOptions {
-  margin:10;padding:0;display:inline-block;width:100%;vertical-align: text-top;background-color:lightblue;
+  margin:10;padding:0;display:inline-block;vertical-align: text-top;
+  background-color:lightblue;
+  width:100%;
 }
-.navbar {
-    margin:0;padding:0;display:block;height:120px;
-}
+
 h4{
   margin:3;
   padding:0;
@@ -19,5 +19,14 @@ h4{
   margin:0;padding:0;display:block;
 }
 #facetOptions {
-border-style:solid;border-color:lightblue;display:inline-block;width:100%;vertical-align: text-top;background-color:lightblue;
+  border-style:solid;border-color:lightblue;display:inline-block;vertical-align: text-top;
+  background-color:lightblue;
+  width:100%;
+}
+#mainPanel {
+ margin-top:-120px;
+ /* width:1000px;*/
+}
+#helpText{
+  width:600px;
 }
