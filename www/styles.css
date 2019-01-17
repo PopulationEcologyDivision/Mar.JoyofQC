@@ -25,8 +25,12 @@ h4{
 }
 #mainPanel {
  margin-top:-120px;
+ height:100%;
  /* width:1000px;*/
 }
 #helpText{
   width:600px;
+}
+.shiny-input-container:not(.shiny-input-container-inline) {
+  width: 100%;
 }

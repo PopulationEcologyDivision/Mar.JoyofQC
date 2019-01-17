@@ -37,6 +37,9 @@ getHelp<-function(){
                   near the origin.  Choosing to hide the data doesn't apply a QC 
                   status, but simply results in a button appearing that will allow
                   you to unhide the data.")
+                 ,p("Lastly, it can be helpful to apply your QC status and then 
+                    hide that data in one step.  To make this happen, make sure that 
+                    the 'Hide QC'd data' box is ticked.")
                  ,h4("How Can I Save My Work?")
                  ,p("The second row of tools above the plot(s) relate to saving 
                   the results of your QC session, and allow you to save every record 

@@ -8,7 +8,6 @@ server <- function(input, output, session) {
   .GlobalEnv$Oschema <- "None"
   .GlobalEnv$Otable <- "None"
   .GlobalEnv$qcprompt = "QC Comment (optional)"
-  
   source("getHelp.R")
   
   output$getHelp<-renderUI({
@@ -82,7 +81,7 @@ server <- function(input, output, session) {
     if (type == "local"){
       if (specific=="robject"){
         if (is.null(theobj)){
-          localObjs= names(which(unlist(eapply(.GlobalEnv,is.data.frame))))
+          localObjs= sort(names(which(unlist(eapply(.GlobalEnv,is.data.frame)))))
           if (length(localObjs)<1){
             output$rObjSel = NULL
           }else{
@@ -233,8 +232,10 @@ server <- function(input, output, session) {
   observeEvent(
     input$handleSelect
     , {
+      
       thisData = .GlobalEnv$dataObj
-      newcomm = ifelse(input$selDet==.GlobalEnv$qcprompt,NA, input$selDet)
+      if(is.null(thisData))return(NULL)
+      newcomm = ifelse(input$selDet==.GlobalEnv$qcprompt,"", input$selDet)
       selected <- selected()
       if (input$qcAction == "good"){
         thisData[rownames(thisData) %in% rownames(selected),"QC_STATUS"]<-"GOOD"
@@ -242,12 +243,14 @@ server <- function(input, output, session) {
       }else if (input$qcAction == "bad"){
         thisData[rownames(thisData) %in% rownames(selected),"QC_STATUS"]<-"BAD"
         output$saveMsg <- renderText("")
-      }else if (input$qcAction == "ugly"){
+      }
+      
+      if (input$qcAction == "ugly" | input$hideHandled ==T){
         thisData[rownames(thisData) %in% rownames(selected),"QC_HIDDEN"]<-TRUE
       }
-
       
-      thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"]<-paste0(ifelse(is.na(thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"]),"",paste0(thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"],",")),newcomm)
+      
+      thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"]<-paste0(ifelse(is.na(thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"]) | nchar(thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"])<1,"",paste0(thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"],",")),newcomm)
       updateTextInput(session, "selDet", label = NULL, value = .GlobalEnv$qcprompt)
       
       if (nrow(thisData[thisData$QC_HIDDEN ==TRUE,])>0){
@@ -273,7 +276,6 @@ server <- function(input, output, session) {
   
   observeEvent(
     input$saveDet,{
-      browser()
       ts = format(Sys.time(), "%Y%m%d_%H%M")
       thisData = .GlobalEnv$dataObj
       thisData = thisData[, !names(thisData) %in% c("QC_HIDDEN")] 
@@ -358,6 +360,25 @@ server <- function(input, output, session) {
     }
     return(res)
   }
+  
+  getPlotHeight <- reactive({
+    input$facet
+    
+    if (is.null(input$facet))return(300)
+    thisData    <- .GlobalEnv$dataObj
+    if (is.null(thisData))return(1)
+    thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
+    nfacets = ifelse(input$facet == 'None',1,length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet])))
+    plotRows = ceiling(nfacets/3)
+    plotHeight = plotRows*300
+    if (nfacets>.GlobalEnv$limitPlots){
+      if (is.null(input$facetOverride)){
+        plotHeight = 1
+      }
+    }
+    return(plotHeight)
+  })
+  
   makePlot<-function(){
     input$facetOverride
     input$handleSelect
@@ -373,8 +394,12 @@ server <- function(input, output, session) {
                       aes(color = QC_STATUS,shape = QC_STATUS,
                           x=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$xaxis], 
                           y=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$yaxis])) + geom_point() + xlab(input$xaxis) + ylab(input$yaxis) + scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED")) 
-    if(!input$facet == 'None') thePlot <- thePlot + facet_wrap(as.formula(paste('~', input$facet)))
-    thePlot
+    if(!input$facet == 'None') {
+      thePlot <- thePlot + facet_wrap(as.formula(paste('~', input$facet)),ncol=3)
+      
+    }
+    thePlot <- thePlot + theme(legend.position="top")
+    return(thePlot)
   }
   makeSelDataTable<-function(){
     input$handleSelect
@@ -388,7 +413,7 @@ server <- function(input, output, session) {
     tableData = tableData[, !names(tableData) %in% c("QC_HIDDEN")] 
     return(tableData)
   }
-  output$distPlot <- renderPlot({
+  output$distPlot <- renderPlot(height =function(){getPlotHeight()},{
     req(input$xaxis, input$yaxis)
     if (is.null(.GlobalEnv$dataObj))return()
     if (input$xaxis == input$yaxis)return()
