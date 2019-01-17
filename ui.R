@@ -1,5 +1,4 @@
 library(shiny)
-library(shinyjs)
 library(ggplot2)
 ui<-fluidPage(theme = "styles.css",
               titlePanel(div(id="logodiv",img(src="logo.PNG", height=100))),

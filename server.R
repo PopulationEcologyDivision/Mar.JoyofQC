@@ -234,7 +234,7 @@ server <- function(input, output, session) {
     input$handleSelect
     , {
       thisData = .GlobalEnv$dataObj
-      comm = ifelse(input$selDet==.GlobalEnv$qcprompt,NA, input$selDet)
+      newcomm = ifelse(input$selDet==.GlobalEnv$qcprompt,NA, input$selDet)
       selected <- selected()
       if (input$qcAction == "good"){
         thisData[rownames(thisData) %in% rownames(selected),"QC_STATUS"]<-"GOOD"
@@ -245,7 +245,9 @@ server <- function(input, output, session) {
       }else if (input$qcAction == "ugly"){
         thisData[rownames(thisData) %in% rownames(selected),"QC_HIDDEN"]<-TRUE
       }
-      thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"]<-comm
+
+      
+      thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"]<-paste0(ifelse(is.na(thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"]),"",paste0(thisData[rownames(thisData) %in% rownames(selected),"QC_COMMENT"],",")),newcomm)
       updateTextInput(session, "selDet", label = NULL, value = .GlobalEnv$qcprompt)
       
       if (nrow(thisData[thisData$QC_HIDDEN ==TRUE,])>0){
