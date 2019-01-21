@@ -5,6 +5,9 @@ server <- function(input, output, session) {
   .GlobalEnv$dataObjFields = NULL
   .GlobalEnv$thisCxn = NULL
   .GlobalEnv$limitPlots = 20
+  .GlobalEnv$OUser <- NA
+  .GlobalEnv$OPW <- NA
+  .GlobalEnv$ODsn <- NA
   .GlobalEnv$Oschema <- "None"
   .GlobalEnv$Otable <- "None"
   .GlobalEnv$qcprompt = "QC Comment (optional)"
@@ -20,7 +23,7 @@ server <- function(input, output, session) {
                           "local csv" = "csvobject",
                           "local r object" = "robject",
                           "oracle" = "oracle",
-                          "sample data"="faithful"))
+                          "sample data"="mtcars"))
   })
   
   #these tags are here instead of UI because they're dynamic
@@ -111,9 +114,9 @@ server <- function(input, output, session) {
       #######
       #start of Oracle-specific functions    
       getOracleCreds<-function(){
-        OcredNameValue = ifelse(exists("oracle.username"),oracle.username, "")
-        OcredPassValue = ifelse(exists("oracle.password"),oracle.password, "")
-        OcredDSNValue = ifelse(exists("oracle.dsn"),oracle.dsn, "")
+        OcredNameValue = ifelse(!is.na(.GlobalEnv$OUser),.GlobalEnv$OUser,ifelse(exists("oracle.username"),oracle.username, ""))
+        OcredPassValue = ifelse(!is.na(.GlobalEnv$OPW),.GlobalEnv$OPW,ifelse(exists("oracle.password"),oracle.password, ""))
+        OcredDSNValue = ifelse(!is.na(.GlobalEnv$ODsn),.GlobalEnv$ODsn,ifelse(exists("oracle.dsn"),oracle.dsn, ""))
         output$OcredUsePkg <- renderUI(selectInput("OcredUsePkg",
                                                    label = "Select how you normally connect R to Oracle ",
                                                    choices = c('rodbc','roracle'),
@@ -127,21 +130,28 @@ server <- function(input, output, session) {
         thisCxn <- Mar.utils::make_oracle_cxn(usepkg = input$OcredUsePkg, fn.oracle.username = input$OcredName,fn.oracle.password = input$OcredPass, fn.oracle.dsn = input$OcredDSN)
         if (class(thisCxn)=="list"){
           .GlobalEnv$thisCxn = thisCxn
+          .GlobalEnv$OUser = toupper(input$OcredName)
+          .GlobalEnv$OPW = toupper(input$OcredPass)
+          .GlobalEnv$ODsn = toupper(input$OcredDSN)
+          output$OcredName = renderUI(textInput("OcredName","Enter your Oracle username", value = toupper(input$OcredName)))
+          output$OcredPass = renderUI(passwordInput("OcredPass","Enter your Oracle password", value = toupper(input$OcredPass)))
+          output$OcredDSN = renderUI(textInput("OcredDSN","Oracle DSN", value = toupper(input$OcredDSN)))
+          output$OcredSubmit = renderUI(actionButton("OcredSubmit", "Go"))
         }else{
           .GlobalEnv$thisCxn = NULL
         }
         return(.GlobalEnv$thisCxn)
       }
       showSchemaPick<-function(){
-        schemas = .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("select distinct(table_schema) OWNER from all_tab_privs WHERE GRANTEE = '",toupper(input$OcredName),"' ORDER BY OWNER"))
+        schemas = .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("select distinct(table_schema) OWNER from all_tab_privs WHERE GRANTEE = '",.GlobalEnv$OUser,"' ORDER BY OWNER"))
         output$Oschema <- renderUI(selectInput("Oschema",
                                                label = "Select a schema",
                                                choices = c("None",schemas$OWNER),
                                                selected = "None"))
-        return(NULL)
+        return(schemas)
       }
       showTablePick<-function(){
-        tbls = .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("select TABLE_NAME from all_tab_privs WHERE table_schema = '",input$Oschema,"' AND GRANTEE = '",toupper(input$OcredName),"' ORDER BY TABLE_NAME"))
+        tbls = .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("select TABLE_NAME from all_tab_privs WHERE table_schema = '",.GlobalEnv$Oschema,"' AND GRANTEE = '",.GlobalEnv$OUser,"' ORDER BY TABLE_NAME"))
         output$Otable = renderUI(selectInput("Otable",
                                              label = "Select a table",
                                              choices =c("None",tbls$TABLE_NAME),
@@ -156,14 +166,22 @@ server <- function(input, output, session) {
         req(input$OcredSubmit)
         if (is.null(.GlobalEnv$thisCxn)) {
           cxn = makeOracleCxn()
+          if (is.null(cxn)){
+            print("cxn failed")
+            return(NULL)
+          }
         }
         showSchemaPick()
+        
         return(NULL)
       }else if (is.null(theobj)){
+        
+        assign("Oschema", toupper(specific), envir = .GlobalEnv)
         #no table
         showTablePick()
       }else{
-        dataSelToLoad <- .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("SELECT * FROM ",input$Oschema,".",input$Otable))
+        assign("Otable", toupper(theobj), envir = .GlobalEnv)
+        dataSelToLoad <- .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("SELECT * FROM ",.GlobalEnv$Oschema,".",.GlobalEnv$Otable))
       }
     }
     
@@ -194,8 +212,7 @@ server <- function(input, output, session) {
     }
     populateDrops()
   }
-  
-  
+
   observeEvent(input$fBrowse,{
     #this ensures that if a file is input, it gets handled
     handleData("local", input$dataSel, input$fBrowse)
@@ -206,6 +223,12 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$OcredSubmit,{
+    print("submitted")
+    if (!is.null(.GlobalEnv$thisCxn)){
+      assign("thisCxn", NULL, envir = .GlobalEnv)
+      output$Oschema = NULL
+      output$Otable = NULL
+    }
     handleData(input$dataSel, NULL, NULL)
   })
   observeEvent(input$Oschema,{
@@ -237,6 +260,7 @@ server <- function(input, output, session) {
       if(is.null(thisData))return(NULL)
       newcomm = ifelse(input$selDet==.GlobalEnv$qcprompt,"", input$selDet)
       selected <- selected()
+      #browser()
       if (input$qcAction == "good"){
         thisData[rownames(thisData) %in% rownames(selected),"QC_STATUS"]<-"GOOD"
         output$saveMsg <- renderText("")
@@ -324,6 +348,18 @@ server <- function(input, output, session) {
                       selected = "Help")
   })
   
+  # selectedMega <- reactive({
+  #   input$brushMega
+  #   thisData = getMegaData(coreField=input$xaxis)
+  #   brushedMega=brushedPoints(thisData,
+  #                 input$brushMega,
+  #                 xvar = 'value',
+  #                 yvar = input$xaxis)
+  #   print("making sel")
+  #   print(brushedMega)
+  #   return(brushedMega)
+  # })
+  # 
   selected <- reactive({
     input$brush
     thisData = .GlobalEnv$dataObj
@@ -351,7 +387,7 @@ server <- function(input, output, session) {
       output$facetOptions <-
         renderUI({
           #these tags are here instead of UI so they can be on one line
-          div(div(style="display:inline-block;float:both", paste(nfacets, ' has ',nfacets,' unique values.  Perhaps too many to usefully facet by and QC?'))
+          div(div(style="display:inline-block;float:both", paste(input$facet, ' has ',nfacets,' unique values.  Perhaps too many to usefully facet by and QC?'))
               , div(style="display:inline-block;float:both",actionButton(inputId = 'facetOverride', label = paste0("Thanks, 'Dad', show all ",nfacets,"(!) plots"), icon = icon('layer-group')))
               ,div(style="clear:both")
           )
@@ -363,7 +399,6 @@ server <- function(input, output, session) {
   
   getPlotHeight <- reactive({
     input$facet
-    
     if (is.null(input$facet))return(300)
     thisData    <- .GlobalEnv$dataObj
     if (is.null(thisData))return(1)
@@ -377,7 +412,29 @@ server <- function(input, output, session) {
       }
     }
     return(plotHeight)
+  })  
+  getMegaPlotHeight <- reactive({
+    input$xaxis
+    thisData<- .GlobalEnv$dataObj
+    if (is.null(thisData))return(1)
+    thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
+    thisData = thisData[, !names(thisData) %in% c("QC_COMMENT", "QC_HIDDEN", "QC_STATUS")] 
+    nplots = ncol(thisData)-1
+    plotRows = ceiling(nplots/3)
+    plotHeight = plotRows*300
+    # print(plotHeight)
+    return(plotHeight)
   })
+  
+  getMegaData = function(coreField = NULL){
+    if (is.null(.GlobalEnv$dataObj))return()
+    thisData    <- .GlobalEnv$dataObj
+    thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
+    thisData = thisData[!is.na(thisData[coreField]),]
+    thisData = thisData[, !names(thisData) %in% c("QC_COMMENT", "QC_HIDDEN", "QC_STATUS")] 
+    thisData = thisData %>% gather(-coreField , key = "var", value = "value")  
+    return(thisData)
+  }
   
   makePlot<-function(){
     input$facetOverride
@@ -401,6 +458,15 @@ server <- function(input, output, session) {
     thePlot <- thePlot + theme(legend.position="top")
     return(thePlot)
   }
+
+  
+  makeMegaPlot<-function(coreField){
+    input$xaxis
+    thisData = getMegaData(coreField)
+    thisMegaPlot =ggplot(data = thisData, aes(x = coreField, y = value )) + geom_point() + scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED")) + facet_wrap(~ var,ncol=3) + theme(legend.position="top")
+    return(thisMegaPlot)
+  }
+
   makeSelDataTable<-function(){
     input$handleSelect
     input$unhide
@@ -411,8 +477,24 @@ server <- function(input, output, session) {
                               xvar = input$xaxis,
                               yvar = input$yaxis)
     tableData = tableData[, !names(tableData) %in% c("QC_HIDDEN")] 
+    tableData = Mar.utils::drop_NA_cols(tableData)
     return(tableData)
   }
+  makeSelDataTableMega<-function(coreField =NULL){
+    input$handleSelect
+    input$unhide
+    thisData = getMegaData(coreField)
+
+    tableData=brushedPoints(thisData,
+                            input$brushMega,
+                            xvar = 'value',
+                            yvar = input$xaxis)
+     print("making table")
+    print(tableData)
+    #if (nrow(tableData)==0)browser()
+    return(tableData)
+  }
+  
   output$distPlot <- renderPlot(height =function(){getPlotHeight()},{
     req(input$xaxis, input$yaxis)
     if (is.null(.GlobalEnv$dataObj))return()
@@ -422,6 +504,21 @@ server <- function(input, output, session) {
   output$selTable <- renderDataTable({
     req(input$xaxis, input$yaxis)
     if (is.null(.GlobalEnv$dataObj))return()
-    makeSelDataTable()
+    res = makeSelDataTable()
+    return(res)
+  })
+  
+  
+  output$selTableMega <- renderDataTable({
+    req(input$xaxis)
+    if (is.null(.GlobalEnv$dataObj))return()
+    res = makeSelDataTableMega(coreField = input$xaxis)
+      return(res)
+  })
+  
+  output$distPlotMega <- renderPlot(height =function(){getMegaPlotHeight()},{
+    req(input$xaxis)
+    if (is.null(.GlobalEnv$dataObj))return()
+    makeMegaPlot(coreField = input$xaxis)
   })
 }
