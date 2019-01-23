@@ -246,7 +246,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$OcredSubmit,{
-    print("submitted")
+    #print("submitted")
     if (!is.null(.GlobalEnv$thisCxn)){
       assign("thisCxn", NULL, envir = .GlobalEnv)
       output$Oschema = NULL
@@ -350,7 +350,6 @@ server <- function(input, output, session) {
   
   observeEvent(
     input$facetOverride,{
-      #browser()
       if (.GlobalEnv$limitPlots ==20){
         assign("limitPlots", 500, envir = .GlobalEnv)
       }else{
@@ -386,8 +385,6 @@ server <- function(input, output, session) {
     res = "OK"
     nrowData = nrow(df)
     dataSizeMB = as.numeric(sub(pattern = " Mb",x = format(object.size(df),units = "Mb"),replacement = ""))
-    print(nrowData)
-    print(dataSizeMB)
   if (is.null(nrowData)){
     output$hugeDataWarn <- NULL
   }else if (dataSizeMB > 100){
@@ -467,7 +464,6 @@ server <- function(input, output, session) {
     input$unhide
     thisData    <- .GlobalEnv$dataObj
     dataSizeCheck = dataSizeChecker(thisData)
-    print(dataSizeCheck)
     if (dataSizeCheck=="fail")return(NULL)
     thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
 
