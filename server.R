@@ -1,5 +1,4 @@
 server <- function(input, output, session) {
-  source("version.R")
   options(shiny.maxRequestSize=50*1024^2)  #max Upload size jacked to 50MB
   options(stringsAsFactors = F)
   .GlobalEnv$dataObj = NULL
@@ -12,6 +11,29 @@ server <- function(input, output, session) {
   .GlobalEnv$Oschema <- "None"
   .GlobalEnv$Otable <- "None"
   .GlobalEnv$qcprompt = "QC Comment (optional)"
+  
+  #### Version Check
+  .GlobalEnv$Mar.JoyOfQC =  scan("version.txt",quiet = T)
+  
+  Mar.JoyOfQCRemote  <- tryCatch({
+    scan('https://raw.githubusercontent.com/Maritimes/Mar.JoyofQC/master/version.txt',quiet = T)
+  },
+  error = function(cond) {
+  })
+  
+  updMsg = paste0("v.", .GlobalEnv$Mar.JoyOfQC)
+  if (is.null(Mar.JoyOfQCRemote)){
+    updMsg = paste0(updMsg,": <Unknown status - Server unreachable>")
+    #can't contact github repo
+  }else if (.GlobalEnv$Mar.JoyOfQC != Mar.JoyOfQCRemote){
+    updMsg =paste0(updMsg,": Outdated Version Installed - Please check ",a('github', href = 'https://github.com/Maritimes/Mar.JoyofQC')," for a new one")
+  }else{
+    updMsg =paste0(updMsg,": Current Version Installed")
+  }
+  
+  output$versionCheck <- renderUI({HTML(updMsg)})
+  ####
+  
   source("getHelp.R")
   
   output$getHelp<-renderUI({
@@ -261,7 +283,6 @@ server <- function(input, output, session) {
       if(is.null(thisData))return(NULL)
       newcomm = ifelse(input$selDet==.GlobalEnv$qcprompt,"", input$selDet)
       selected <- selected()
-      #browser()
       if (input$qcAction == "good"){
         thisData[rownames(thisData) %in% rownames(selected),"QC_STATUS"]<-"GOOD"
         output$saveMsg <- renderText("")
@@ -349,18 +370,6 @@ server <- function(input, output, session) {
                       selected = "Help")
   })
   
-  # selectedMega <- reactive({
-  #   input$brushMega
-  #   thisData = getMegaData(coreField=input$xaxis)
-  #   brushedMega=brushedPoints(thisData,
-  #                 input$brushMega,
-  #                 xvar = 'value',
-  #                 yvar = input$xaxis)
-  #   print("making sel")
-  #   print(brushedMega)
-  #   return(brushedMega)
-  # })
-  # 
   selected <- reactive({
     input$brush
     thisData = .GlobalEnv$dataObj
@@ -371,6 +380,42 @@ server <- function(input, output, session) {
                           yvar = input$yaxis)
     return(brushed)
   })
+  
+  dataSizeChecker<-function(df){
+   # if (is.null(df))return(NULL)
+    res = "OK"
+    nrowData = nrow(df)
+    dataSizeMB = as.numeric(sub(pattern = " Mb",x = format(object.size(df),units = "Mb"),replacement = ""))
+    print(nrowData)
+    print(dataSizeMB)
+  if (is.null(nrowData)){
+    output$hugeDataWarn <- NULL
+  }else if (dataSizeMB > 100){
+    #limit exceeded
+    output$hugeDataWarn <-
+      renderUI({
+        #these tags are here instead of UI so they can be on one line
+        div(div(style="display:inline-block;float:both", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's too much for this app. Please filter the data in r to create a smaller r object"))
+            ,div(style="clear:both")
+        )
+      })
+    res = "fail"
+  }else if (dataSizeMB > 20){
+    #upper limit warning
+    output$hugeDataWarn <-
+      renderUI({
+        #these tags are here instead of UI so they can be on one line
+        div(div(style="display:inline-block;float:both", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's a lot for this app.  Consider filtering the data in r to create a smaller r object."))
+            ,div(style="clear:both")
+        )
+      })
+    
+    res = "warn"
+  }else{
+    output$hugeDataWarn <- NULL
+  }
+    return(res)
+  }
   
   facetChecker<-function(nfacets = 1){
     res = "OK"
@@ -414,35 +459,19 @@ server <- function(input, output, session) {
     }
     return(plotHeight)
   })  
-  getMegaPlotHeight <- reactive({
-    input$xaxis
-    thisData<- .GlobalEnv$dataObj
-    if (is.null(thisData))return(1)
-    thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
-    thisData = thisData[, !names(thisData) %in% c("QC_COMMENT", "QC_HIDDEN", "QC_STATUS")] 
-    nplots = ncol(thisData)-1
-    plotRows = ceiling(nplots/3)
-    plotHeight = plotRows*300
-    # print(plotHeight)
-    return(plotHeight)
-  })
-  
-  getMegaData = function(coreField = NULL){
-    if (is.null(.GlobalEnv$dataObj))return()
-    thisData    <- .GlobalEnv$dataObj
-    thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
-    thisData = thisData[!is.na(thisData[coreField]),]
-    thisData = thisData[, !names(thisData) %in% c("QC_COMMENT", "QC_HIDDEN", "QC_STATUS")] 
-    thisData = thisData %>% gather(-coreField , key = "var", value = "value")  
-    return(thisData)
-  }
+
   
   makePlot<-function(){
     input$facetOverride
     input$handleSelect
     input$unhide
     thisData    <- .GlobalEnv$dataObj
+    dataSizeCheck = dataSizeChecker(thisData)
+    print(dataSizeCheck)
+    if (dataSizeCheck=="fail")return(NULL)
     thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
+
+    
     x <- thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][!is.na(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$xaxis]),input$xaxis]
     y <- thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][!is.na(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$yaxis]),input$yaxis]
     nfacets = ifelse(input$facet == 'None',1,length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet])))
@@ -459,15 +488,7 @@ server <- function(input, output, session) {
     thePlot <- thePlot + theme(legend.position="top")
     return(thePlot)
   }
-
-  
-  makeMegaPlot<-function(coreField){
-    input$xaxis
-    thisData = getMegaData(coreField)
-    thisMegaPlot =ggplot(data = thisData, aes(x = coreField, y = value )) + geom_point() + scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED")) + facet_wrap(~ var,ncol=3) + theme(legend.position="top")
-    return(thisMegaPlot)
-  }
-
+ 
   makeSelDataTable<-function(){
     input$handleSelect
     input$unhide
@@ -481,21 +502,11 @@ server <- function(input, output, session) {
     tableData = Mar.utils::drop_NA_cols(tableData)
     return(tableData)
   }
-  makeSelDataTableMega<-function(coreField =NULL){
-    input$handleSelect
-    input$unhide
-    thisData = getMegaData(coreField)
 
-    tableData=brushedPoints(thisData,
-                            input$brushMega,
-                            xvar = 'value',
-                            yvar = input$xaxis)
-     print("making table")
-    print(tableData)
-    #if (nrow(tableData)==0)browser()
-    return(tableData)
-  }
+
   
+
+                                         
   output$distPlot <- renderPlot(height =function(){getPlotHeight()},{
     req(input$xaxis, input$yaxis)
     if (is.null(.GlobalEnv$dataObj))return()
@@ -510,16 +521,73 @@ server <- function(input, output, session) {
   })
   
   
-  output$selTableMega <- renderDataTable({
-    req(input$xaxis)
-    if (is.null(.GlobalEnv$dataObj))return()
-    res = makeSelDataTableMega(coreField = input$xaxis)
-      return(res)
-  })
+
+  #below is all megaPlot stuff which is not yet working
+  # selectedMega <- reactive({
+  #   input$brushMega
+  #   thisData = getMegaData(coreField=input$xaxis)
+  #   brushedMega=brushedPoints(thisData,
+  #                 input$brushMega,
+  #                 xvar = 'value',
+  #                 yvar = input$xaxis)
+  #   print("making sel")
+  #   print(brushedMega)
+  #   return(brushedMega)
+  # })
+  # 
+  # getMegaPlotHeight <- reactive({
+  #   input$xaxis
+  #   thisData<- .GlobalEnv$dataObj
+  #   if (is.null(thisData))return(1)
+  #   thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
+  #   thisData = thisData[, !names(thisData) %in% c("QC_COMMENT", "QC_HIDDEN", "QC_STATUS")] 
+  #   nplots = ncol(thisData)-1
+  #   plotRows = ceiling(nplots/3)
+  #   plotHeight = plotRows*300
+  #   # print(plotHeight)
+  #   return(plotHeight)
+  # })
   
-  output$distPlotMega <- renderPlot(height =function(){getMegaPlotHeight()},{
-    req(input$xaxis)
-    if (is.null(.GlobalEnv$dataObj))return()
-    makeMegaPlot(coreField = input$xaxis)
-  })
+  # getMegaData = function(coreField = NULL){
+  #   if (is.null(.GlobalEnv$dataObj))return()
+  #   thisData    <- .GlobalEnv$dataObj
+  #   thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
+  #   thisData = thisData[!is.na(thisData[coreField]),]
+  #   thisData = thisData[, !names(thisData) %in% c("QC_COMMENT", "QC_HIDDEN", "QC_STATUS")] 
+  #   thisData = thisData %>% gather(-coreField , key = "var", value = "value")  
+  #   return(thisData)
+  # }  
+  # makeMegaPlot<-function(coreField){
+  #   input$xaxis
+  #   thisData = getMegaData(coreField)
+  #   thisMegaPlot =ggplot(data = thisData, aes(x = coreField, y = value )) + geom_point() + scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED")) + facet_wrap(~ var,ncol=3) + theme(legend.position="top")
+  #   return(thisMegaPlot)
+  # }
+  # makeSelDataTableMega<-function(coreField =NULL){
+  #   input$handleSelect
+  #   input$unhide
+  #   thisData = getMegaData(coreField)
+  # 
+  #   tableData=brushedPoints(thisData,
+  #                           input$brushMega,
+  #                           xvar = 'value',
+  #                           yvar = input$xaxis)
+  #    print("making table")
+  #   print(tableData)
+  #   #if (nrow(tableData)==0)browser()
+  #   return(tableData)
+  # }
+  # output$selTableMega <- renderDataTable({
+  #   req(input$xaxis)
+  #   if (is.null(.GlobalEnv$dataObj))return()
+  #   res = makeSelDataTableMega(coreField = input$xaxis)
+  #     return(res)
+  # })
+  # output$distPlotMega <- renderPlot(height =function(){getMegaPlotHeight()},{
+  #   req(input$xaxis)
+  #   if (is.null(.GlobalEnv$dataObj))return()
+  #   makeMegaPlot(coreField = input$xaxis)
+  # })
+  
+
 }

@@ -23,6 +23,11 @@ h4{
   background-color:lightblue;
   width:100%;
 }
+#hugeDataWarn {
+  margin:20;border-style:none;border-color:#e6adbc;display:inline-block;vertical-align: text-top;
+  background-color:#e6adbc;
+  width:100%;
+}
 #mainPanel {
  margin-top:-120px;
  height:100%;
@@ -34,3 +39,4 @@ h4{
 .shiny-input-container:not(.shiny-input-container-inline) {
   width: 100%;
 }
+

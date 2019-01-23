@@ -1,10 +1,11 @@
 library(shiny)
 library(ggplot2)
 library(tidyr)
-ui<-fluidPage(theme = "styles.css",
-              titlePanel(div(id="logodiv",img(src="logo.PNG", height=100))),
-              sidebarLayout(
+ui<-fluidPage(theme = "styles.css"
+              ,titlePanel(div(id="logodiv",img(src="logo.PNG", height=100)))
+              ,sidebarLayout(
                 sidebarPanel(width = 3
+                             
                              ,htmlOutput("dataSel")
                              ,htmlOutput("rObjSel")
                              ,htmlOutput("fBrowse")
@@ -18,7 +19,7 @@ ui<-fluidPage(theme = "styles.css",
                              ,htmlOutput("xaxis")
                              ,htmlOutput("yaxis")
                              ,htmlOutput("facet")
-                             ,textOutput("loadstatus")
+                             
                 )
                 ,mainPanel(id = "mainPanel"
                            # tabsetPanel(id="inTabset"
@@ -37,10 +38,12 @@ ui<-fluidPage(theme = "styles.css",
                                                                                 choiceValues = list("saveAll","saveFlagged"), inline=T))
                                 ,div(style="display:inline-block;",actionButton(inputId = 'saveDet', label = 'Save Data', icon = icon('save')))
                                 ,div(style="display:inline-block;",htmlOutput("saveMsg"))
+                               
                            )
                            , tabsetPanel(id="inTabset2",
                                          tabPanel("Results"
                                                   ,htmlOutput("facetOptions")
+                                                  ,htmlOutput("hugeDataWarn")
                                                   ,plotOutput(height="100%", outputId = "distPlot", brush = brushOpts(id = 'brush'))
                                                  ,dataTableOutput("selTable")
                                          # ) , tabPanel("Plot-splosion"
@@ -53,5 +56,7 @@ ui<-fluidPage(theme = "styles.css",
                                          
                            ) 
                 )
-              )
+              ),
+              tagList(hr(),
+              div(htmlOutput(outputId="versionCheck")))
 )
