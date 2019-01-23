@@ -317,7 +317,7 @@ server <- function(input, output, session) {
       thisData = thisData[with(thisData, order(QC_STATUS, QC_COMMENT, thisData[fields[1]])), fields]
       assign(paste0("qcResults_",ts), thisData,envir = .GlobalEnv)
       write.csv(thisData, paste0("qcResults_",ts,".csv"), row.names = FALSE)
-      output$saveMsg <- renderText("Output Saved")
+      output$saveMsg <- renderText(paste0("Output saved as ", paste0(getwd(),"/qcResults_",ts,".csv")))
     })
   
   observeEvent(input$unhide,{
