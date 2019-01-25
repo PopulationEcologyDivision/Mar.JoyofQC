@@ -3,11 +3,65 @@ body {
    margin:0;
 }
 #editOptions {
-  margin:10;padding:0;display:inline-block;vertical-align: text-top;
-  background-color:lightblue;
+  display:block;
+  text-align: center; 
   width:100%;
+  background-color:lightblue;
+}
+.clearer {
+  clear:both;
 }
 
+#qcOpts {
+  display:inline-block;
+  vertical-align:middle;
+  }
+#chk,#qcAction,#selDet,#hideHandled,#dataSel,#unhide,#saveDet   {
+  display:inline-block;
+  vertical-align:middle;
+  padding-right:5px;
+  clear:both;
+}
+
+
+#selDetInput {
+  background-color:#e6d8ad;
+  vertical-align:middle;
+  padding-right:5px;
+  width:200px;
+}
+
+
+#dataSel-selectized{
+  width:400px;
+}
+
+#invertSelection {
+  display:inline-block;
+  vertical-align:middle;
+  padding-right:5px;
+  padding-left:5px;
+  border-top-left-radius:5px;
+  border-bottom-left-radius:5px;
+  border-top-right-radius:5px;
+  border-bottom-right-radius:5px;
+  border-left:1px solid 	#808080;
+  border-right:1px solid 	#808080;
+  clear:both;
+}
+#applyTo {
+  text-align:right;
+  padding-right:5px;
+  display:inline-block;
+  vertical-align:middle;
+  clear:both;
+}
+
+#saveMsg {
+  background-color:#e6d8ad;
+  text-align:left; 
+  vertical-align: middle;
+}
 h4{
   margin:3;
   padding:0;
@@ -18,13 +72,23 @@ h4{
 .row {
   margin:0;padding:0;display:block;
 }
+
 #facetOptions {
-  border-style:solid;border-color:lightblue;display:inline-block;vertical-align: text-top;
+  border-style:solid;
+  border-color:lightblue;
+  display:inline-block;
+  text-align: center; 
+  vertical-align: middle;
   background-color:lightblue;
   width:100%;
 }
 #hugeDataWarn {
-  margin:20;border-style:none;border-color:#e6adbc;display:inline-block;vertical-align: text-top;
+  margin:20;
+  border-style:none;
+  border-color:#e6adbc;
+  display:inline-block;
+  text-align: center; 
+  vertical-align: middle;
   background-color:#e6adbc;
   width:100%;
 }
@@ -39,4 +103,11 @@ h4{
 .shiny-input-container:not(.shiny-input-container-inline) {
   width: 100%;
 }
+
+label{ 
+  display: table-cell; 
+  text-align: center; 
+  vertical-align: middle;;
+} 
+
 
