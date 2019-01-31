@@ -1,12 +1,55 @@
+
 body {
    font-family: "Trebuchet MS", Helvetica, sans-serif; 
    margin:0;
+}
+.nav-tabs{
+  border-bottom:0 transparent;
+}
+.nav-tabs>li{
+  margin-bottom: -2px;
+}
+.nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover,.nav-tabs>li.active>a
+{
+  border:2px solid #E3E3E3;
+  border-bottom-color:transparent;
+  background-color:#F5F5F5;
+}
+
+.row {
+  margin:0;
+  padding:0;
+}
+.col-sm-4 {
+  width: 280px;
+ float:left;
+}
+#logodiv {
+   width: 280px;
+  text-align:right;
+  padding-right:15px;
+}
+#versionCheck {
+  line-height: 0.9;
+  text-align:right;
+}
+#mainPanel {
+  margin-top:-120px;
+}
+#getHelp{
+   border:2px solid #E3E3E3;
+  background-color:#F5F5F5;
+  border-radius:5px;
+  padding:5px; 
 }
 #editOptions {
   display:block;
   text-align: center; 
   width:100%;
-  background-color:lightblue;
+  border:2px solid #E3E3E3;
+  background-color:#F5F5F5;
+  border-radius:5px;
+  padding:5px;
 }
 .clearer {
   clear:both;
@@ -14,31 +57,75 @@ body {
 
 #qcOpts {
   display:inline-block;
-  vertical-align:middle;
+  vertical-align:top;
   }
-#chk,#qcAction,#selDet,#hideHandled,#dataSel,#unhide,#saveDet   {
+
+  #chk {
+      width:150px;
+  vertical-align:bottom;
+      height:2em;
+      
+  }
+#chk,#qcAction,#selDet,#hideHandled,#dataSel,#unhide,#saveDet ,#saveSess  {
   display:inline-block;
-  vertical-align:middle;
+  vertical-align:top;
   padding-right:5px;
   clear:both;
+  height:2em;
 }
-
-
-#selDetInput {
-  background-color:#e6d8ad;
-  vertical-align:middle;
-  padding-right:5px;
+#saveDet,#saveSess {
   width:200px;
 }
 
-
-#dataSel-selectized{
-  width:400px;
+.selectize-input,form-control{
+  display:block;
+  float:left;
+  background-color:orange;
+  width:200px;
+  /*height:50px;*/
+}
+.shiny-input-container:not(.shiny-input-container-inline) {
+  display:inline-block;
+  /*height:50px;*/
+  width:200px;
+}
+.checkbox{
+  vertical-align:middle;
 }
 
+#plotchk {
+  width:100%;
+  display:inline-block;
+  text-align: center; 
+  vertical-align:top;
+}
+#plotchk>div{
+  text-align:center;
+}
+
+#plotchk.shiny-html-output.shiny-bound-output>div{
+  display:inline-block;
+  height:1.5em;
+   text-align: center; 
+   width:35em;
+}
+#plotchk label {
+  float:left;
+  vertical-align:bottom;
+  text-align:center;
+}
+img {
+  border:1px solid black;
+}
+#selDetInput {
+  background-color:#e6d8ad;
+  vertical-align:top;
+  padding-right:5px;
+  width:200px;
+}
 #invertSelection {
   display:inline-block;
-  vertical-align:middle;
+  vertical-align:top;
   padding-right:5px;
   padding-left:5px;
   border-top-left-radius:5px;
@@ -53,61 +140,49 @@ body {
   text-align:right;
   padding-right:5px;
   display:inline-block;
-  vertical-align:middle;
+  vertical-align:top;
   clear:both;
 }
 
 #saveMsg {
   background-color:#e6d8ad;
   text-align:left; 
-  vertical-align: middle;
+  vertical-align: top;
 }
 h4{
   margin:3;
   padding:0;
 }
-.container-fluid {
-   margin:0;padding:0;display:block;
-}
-.row {
-  margin:0;padding:0;display:block;
+#resetZoom{
+  text-align: left; 
 }
 
 #facetOptions {
-  border-style:solid;
-  border-color:lightblue;
+  /*border-style:solid;
+  border-color:lightblue;*/
   display:inline-block;
   text-align: center; 
-  vertical-align: middle;
-  background-color:lightblue;
+  vertical-align: top;
   width:100%;
 }
 #hugeDataWarn {
-  margin:20;
+
   border-style:none;
   border-color:#e6adbc;
   display:inline-block;
   text-align: center; 
-  vertical-align: middle;
+  vertical-align: top;
   background-color:#e6adbc;
   width:100%;
-}
-#mainPanel {
- margin-top:-120px;
- height:100%;
- /* width:1000px;*/
 }
 #helpText{
   width:600px;
 }
-.shiny-input-container:not(.shiny-input-container-inline) {
-  width: 100%;
-}
-
 label{ 
-  display: table-cell; 
+  display: block; 
   text-align: center; 
-  vertical-align: middle;;
 } 
-
+.tabbed {
+  padding-left:5em;
+}
 

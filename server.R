@@ -11,9 +11,14 @@ server <- function(input, output, session) {
   .GlobalEnv$Oschema <- "None"
   .GlobalEnv$Otable <- "None"
   .GlobalEnv$qcprompt = "QC Comment (optional)"
-  
-  #### Version Check
+  .GlobalEnv$debug = FALSE
   .GlobalEnv$Mar.JoyOfQC =  scan("version.txt",quiet = T)
+  
+  output$plotchk <- renderUI(NULL)
+  output$hugeDataWarn <- renderUI(NULL)
+  output$facetOptions <- renderUI(NULL)
+  
+  ranges <- reactiveValues(x = NULL, y = NULL)
   
   Mar.JoyOfQCRemote  <- tryCatch({
     scan('https://raw.githubusercontent.com/Maritimes/Mar.JoyofQC/master/version.txt',quiet = T)
@@ -21,17 +26,19 @@ server <- function(input, output, session) {
   error = function(cond) {
   })
   
-  updMsg = paste0("v.", .GlobalEnv$Mar.JoyOfQC)
+  updMsg = paste0(a("Mar.QCJoy", href = "https://github.com/Maritimes/Mar.JoyofQC"), " <br><span style='font-size:0.5em;'>v.",.GlobalEnv$Mar.JoyOfQC," </span>")
   if (is.null(Mar.JoyOfQCRemote)){
-    updMsg = paste0(updMsg,": <Unknown status - Server unreachable>")
+    updMsg = paste0(updMsg,"<br> Can't reach git to check version")
     #can't contact github repo
-  }else if (.GlobalEnv$Mar.JoyOfQC != Mar.JoyOfQCRemote){
-    updMsg =paste0(updMsg,": Outdated Version Installed - Please check ",a('github', href = 'https://github.com/Maritimes/Mar.JoyofQC')," for a new one")
+  }else if (.GlobalEnv$Mar.JoyOfQC > Mar.JoyOfQCRemote){
+    updMsg =paste0(updMsg,"<br><span style='font-size:0.5em;color:red;'><b>&lt;Push to Github!&gt;</b></span>")
+  }else if (.GlobalEnv$Mar.JoyOfQC > Mar.JoyOfQCRemote){
+    updMsg =paste0(updMsg,"<span style='font-size:0.5em;color:red;'>&lt;Outdated!&gt;</span>")
   }else{
-    updMsg =paste0(updMsg,": Current Version Installed")
+    updMsg =paste0(updMsg,"<span style='font-size:0.5em;color:blue;'>&lt;Current&gt;</span>")
   }
   
-  output$versionCheck <- renderUI({HTML(updMsg)})
+  output$versionCheck <- renderUI(HTML(updMsg))
   ####
   
   source("getHelp.R")
@@ -40,28 +47,13 @@ server <- function(input, output, session) {
     getHelp()
   })
   
-  # output$dataSel<-renderUI({
-  #   tagList(selectInput("dataSel", label ="Select some data",
-  #               choices=c("None"="None",
-  #                         "local csv" = "csvobject",
-  #                         "local r object" = "robject",
-  #                         "oracle" = "oracle",
-  #                         "sample data"="mtcars"))
-  #           ,tags$style("#dataSel-selectized","{width:400px}")
-  #   )
-  # })
-  #   output$hideHandled<- renderUI({
-  # checkboxInput("hideHandled", label = "Hide QC'd data",value = FALSE)
-  # 
-  #   })
-  
-  
   #these tags are here instead of UI because they're dynamic
   output$selDet = renderUI(textInput(inputId = "selDetInput", label = "",value = .GlobalEnv$qcprompt))
   output$unhide = renderUI("")
-  #output$saveMsg = renderUI(textOutput('saveMsg'))
-  
+
   populateDrops<-function(){
+    
+    if (.GlobalEnv$debug) print("populateDrops")
     if (!is.null(.GlobalEnv$dataObjFields)){
       if (length(.GlobalEnv$dataObjFields)<2){
         output$loadstatus <- renderText(paste0("Insufficient plottable columns!"))
@@ -69,93 +61,91 @@ server <- function(input, output, session) {
       }
       output$xaxis = renderUI(selectInput("xaxis", "Select your x-axis", choices = .GlobalEnv$dataObjFields, selected = .GlobalEnv$dataObjFields[1], multiple = FALSE))
       output$yaxis = renderUI(selectInput("yaxis", "Select your y-axis", choices = .GlobalEnv$dataObjFields, selected = .GlobalEnv$dataObjFields[2], multiple = FALSE))
+      if (.GlobalEnv$debug) print("axes rendered")
       if (length(.GlobalEnv$dataObjFields)>2){
         output$facet = renderUI(selectInput("facet", "Select a field to facet by", choices = c("None",.GlobalEnv$dataObjFields), multiple = FALSE))
       }else{
-        output$facet = NULL
+        output$facet = renderUI({NULL})
       }
     }
   }
   handleData<-function(type=NULL, specific=NULL, theobj=NULL){
-    ##########
-    #this area is just for setting ui boxes to NUll - other logic is below
-    output$xaxis = NULL
-    output$yaxis = NULL
-    output$facet = NULL
-    output$saveMsg = NULL
-    output$loadstatus = NULL
-    output$facetText = NULL
-    
-    if (type != "oracle"){
-      output$OcredUsePkg = NULL
-      output$OcredName = NULL
-      output$OcredPass = NULL
-      output$OcredDSN = NULL
-      output$OcredSubmit = NULL
-      output$Oschema = NULL
-      output$Otable = NULL
-    }
-    if (exists("specific")){
-      if (type != "local"){
-        output$fBrowse = NULL
-        output$jBrowse = NULL
-        output$rObjSel = NULL
-      }else if (specific != "csvobject"){
-        output$fBrowse = NULL
-      }else if (specific != "robject" ){
-        output$rObjSel = NULL
-      }else if (specific != "qcobject" ){
-        output$jBrowse = NULL
-      }
-    }
-    ##########
-    
+    #if (.GlobalEnv$debug) print("handleData")
+    if (.GlobalEnv$debug) print(paste0("type:",type,"   specific:",specific,"   theobj", theobj))    
     dataSelToLoad = NULL
     if (type == "sample"){
       dataSelToLoad = get(specific)
-    }
-    
-    if (type == "local"){
-      if (specific=="robject"){
+      output$saveMsg <- renderText("Sample data loaded")
+    } else if (type=="local"){
+      if (specific == "csvobject"){
         if (is.null(theobj)){
-          localObjs= sort(names(which(unlist(eapply(.GlobalEnv,is.data.frame)))))
-          if (length(localObjs)<1){
-            output$rObjSel = NULL
-          }else{
-            output$rObjSel= renderUI(selectInput("rObjSel","Local R Object", c("None",localObjs)))
-          }
-          dataSelToLoad = NULL
-        }else{
-          if (theobj == "None")return()
-          dataSelToLoad = get(theobj)
-        }
-      } else if (specific == "csvobject"){
-        if (is.null(theobj)){
-          output$fBrowse = renderUI(fileInput("fBrowse", "Choose *.csv File",
+          output$fBrowse = renderUI(fileInput("fBrowse", "Choose *.csv file",
                                               accept = c(
                                                 "text/csv",
                                                 "text/comma-separated-values,text/plain",
                                                 ".csv","csv"),
                                               multiple = FALSE))
+          # browser()
           if (is.null(input$fBrowse))return()
         }else{
           dataSelToLoad = read.csv(theobj$datapath)
+          output$saveMsg <- renderText("Local csv object loaded")
         }
-      }else if (specific == "qcobject"){
+      }else if (specific == "robject" ){
         if (is.null(theobj)){
-          output$jBrowse = renderUI(fileInput("jBrowse", "Choose a *.joy File",
+          localObjs= sort(names(which(unlist(eapply(.GlobalEnv,is.data.frame)))))
+          if (length(localObjs)<1){
+            output$rObjSel = renderUI({NULL})
+          }else{
+            output$rObjSel= renderUI(selectInput("rObjSel","Choose a local R object", c("None",localObjs)))
+            if (is.null(input$rObjSel))return()
+          }
+          dataSelToLoad = renderUI({NULL})
+        }else{
+          if (theobj == "None")return()
+          dataSelToLoad = get(theobj)
+          output$saveMsg <- renderText("Local r object loaded")
+        }
+      }else if (specific == "qcobject" ){
+        if (is.null(theobj)){
+          output$jBrowse = renderUI(fileInput("jBrowse", "Choose a *.joy file",
                                               accept = c("joy",".joy"),
                                               multiple = FALSE))
           if (is.null(input$jBrowse))return()
         }else{
           dataSelToLoad = read.csv(theobj$datapath)
+          output$saveMsg <- renderText("Saved qc session loaded")
+        } 
+      }else if (specific == "rdsobject" ){
+      
+        if (is.null(theobj)){
+          output$rdsBrowse = renderUI(fileInput("rdsBrowse", "Choose an *.rds file",
+                                              accept = c("rds",".rds"),
+                                              multiple = FALSE))
+          if (is.null(input$rdsBrowse))return()
+        }else{
+          dataSelToLoad = readRDS(theobj$datapath)
+          output$saveMsg <- renderText("rds file loaded")
+        } 
+      }else if (specific == "rdata" ){
+        if (is.null(theobj)){
+          output$rBrowse = renderUI(fileInput("rBrowse", "Choose an *.rdata/*.rda file",
+                                              accept = c("rdata",".rdata","rda",".rda"),
+                                              multiple = FALSE))
+          if (is.null(input$rBrowse))return()
+        }else{
+          
+          loadRData <- function(fileName){
+            #weird function to load rdata to known name
+            load(fileName)
+            get(ls()[ls() != "fileName"])
+          }
+          dataSelToLoad <- loadRData(theobj$datapath)
+          
+          output$saveMsg <- renderText("Rdata loaded")
         } 
       }
-    }
-    if (type == "oracle"){
-      dataSelToLoad <-NULL
-      #######
-      #start of Oracle-specific functions    
+    }else if (type == "oracle"){
       getOracleCreds<-function(){
         OcredNameValue = ifelse(!is.na(.GlobalEnv$OUser),.GlobalEnv$OUser,ifelse(exists("oracle.username"),oracle.username, ""))
         OcredPassValue = ifelse(!is.na(.GlobalEnv$OPW),.GlobalEnv$OPW,ifelse(exists("oracle.password"),oracle.password, ""))
@@ -225,85 +215,33 @@ server <- function(input, output, session) {
       }else{
         assign("Otable", toupper(theobj), envir = .GlobalEnv)
         dataSelToLoad <- .GlobalEnv$thisCxn$thecmd(.GlobalEnv$thisCxn$channel,paste0("SELECT * FROM ",.GlobalEnv$Oschema,".",.GlobalEnv$Otable))
+        output$saveMsg <- renderText("Oracle data loaded")
       }
     }
     
     if (is.null(dataSelToLoad)) {return()}
+    if (attr(class(dataSelToLoad),"package")=="sp"){
+      dataSelToLoad=dataSelToLoad@data
+      output$saveMsg <- renderText("file was sp:: object - loading dataframe from that object")
+    }
     if (specific != "qcobject"){
       dataSelToLoad$QC_STATUS <-"UNASSESSED"
       dataSelToLoad$QC_COMMENT <-NA
       dataSelToLoad$QC_HIDDEN<-FALSE
     }
-    
+    if (.GlobalEnv$debug) print(head(dataSelToLoad))
     assign("dataObj",dataSelToLoad,envir = .GlobalEnv)
     assign("dataObjFields",colnames(dataSelToLoad),envir = .GlobalEnv)
-    
-    
-    if (!is.null(theobj)){
-      if (specific =="csvobject"){
-        output$rObjSel = NULL
-        output$jBrowse = NULL
-      }
-      if (specific =="qcobject"){
-        output$fBrowse = NULL
-        output$rObjSel = NULL
-      }
-      if (specific =="robject") {
-        output$fBrowse = NULL
-        output$jBrowse = NULL
-      }
-    }
-    
+    # paste0(a("Mar.QCJoy", href = "https://github.com/Maritimes/Mar.JoyofQC"), " <br><span style='font-size:0.5em;'>v.",.GlobalEnv$Mar.JoyOfQC," </span>")
+    output$plotchk = renderUI(div(radioButtons("plotchk", label = a("Show 95% confidence intervals?    ",href="https://ggplot2.tidyverse.org/reference/geom_smooth.html", target="_blank"), 
+                       choices = list("none" = "none", "auto"="auto", "lm"="lm", "glm"="glm", "gam"="gam", "loess"="loess"),
+                       selected = "none")))
+    # output$plotchk = renderUI(div(outputid = "plotchk",checkboxInput("showLm", label = "Show 95% confidence intervals (linear)?",value = FALSE),
+    #                           checkboxInput("showLoess", label = "Show 95% confidence intervals (loess)?",value = FALSE)))
     populateDrops()
   }
-  
-  observeEvent(input$fBrowse,{
-    #this ensures that if a file is input, it gets handled
-    handleData("local", input$dataSel, input$fBrowse)
-  })
-  observeEvent(input$jBrowse,{
-    #this ensures that if a file is input, it gets handled
-    handleData("local", input$dataSel, input$jBrowse)
-  })
-  observeEvent(input$rObjSel,{
-    #this ensures that if an r object is picked, it gets handled
-    handleData("local", input$dataSel, input$rObjSel)
-  })
-  observeEvent(input$OcredSubmit,{
-    if (!is.null(.GlobalEnv$thisCxn)){
-      assign("thisCxn", NULL, envir = .GlobalEnv)
-      output$Oschema = NULL
-      output$Otable = NULL
-    }
-    handleData(input$dataSel, NULL, NULL)
-  })
-  observeEvent(input$Oschema,{
-    if (input$Oschema == "None")return(NULL)
-    handleData(input$dataSel, input$Oschema, NULL)
-  })
-  observeEvent(input$Otable,{
-    if (input$Otable == "None")return(NULL)
-    handleData(input$dataSel,input$Oschema,input$Otable)
-  })
-  observeEvent(input$dataSel,{
-    if (input$dataSel %in% c("faithful","mtcars","pressure")){
-      handleData("sample",input$dataSel, NULL)
-    } else if (input$dataSel %in% c("robject","csvobject","qcobject")){
-      handleData("local", input$dataSel, NULL)
-    }else if (input$dataSel %in% c("oracle")){
-      handleData("oracle", NULL, NULL)
-    }
-  })
-  observeEvent(input$handleSelected,{
-    applyQC()
-  })
-  
-  observeEvent(input$handleUnselected,{
-    applyQC("inverted")
-  })
-  
-  
   applyQC<-function(sel="normal"){
+    if (.GlobalEnv$debug) print("applyQC")
     thisData = .GlobalEnv$dataObj
     if(is.null(thisData))return(NULL)
     newcomm = ifelse(input$selDetInput==.GlobalEnv$qcprompt,"", input$selDetInput)
@@ -335,18 +273,207 @@ server <- function(input, output, session) {
     if (nrow(thisData[thisData$QC_HIDDEN ==TRUE,])>0){
       output$unhide = renderUI(tagList(actionButton(inputId = 'unhide', label = 'Unhide All', icon = icon('eye'))),tags$style("#unhide","{text-align: center; vertical-align: middle;clear:both}"))
     }else{
-      output$unhide = renderUI("")
+      output$unhide = renderUI({NULL})
     }
     
     assign("dataObj",thisData,envir = .GlobalEnv)
     session$resetBrush("brush")
   }
+  dataSizeChecker<-function(df){
+    if (.GlobalEnv$debug) print("dataSizeChecker")
+    # if (is.null(df))return(NULL)
+    res = "OK"
+    nrowData = nrow(df)
+    dataSizeMB = as.numeric(sub(pattern = " Mb",x = format(object.size(df),units = "Mb"),replacement = ""))
+    if (is.null(nrowData)){
+      output$hugeDataWarn <- renderUI({NULL})
+    }else if (dataSizeMB > 100){
+      #limit exceeded
+      output$hugeDataWarn <-
+        renderUI({
+          #these tags are here instead of UI so they can be on one line
+          div(div(style="display:inline-block;float:both", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's too much for this app. Please filter the data in r to create a smaller r object"))
+              ,div(style="clear:both")
+          )
+        })
+      res = "fail"
+    }else if (dataSizeMB > 20){
+      #upper limit warning
+      output$hugeDataWarn <-
+        renderUI({
+          #these tags are here instead of UI so they can be on one line
+          div(div(style="display:inline-block;float:both", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's a lot for this app.  Consider filtering the data in r to create a smaller r object."))
+              ,div(style="clear:both")
+          )
+        })
+      
+      res = "warn"
+    }else{
+      output$hugeDataWarn <- renderUI({NULL})
+    }
+    return(res)
+  }
+  facetChecker<-function(nfacets = 1){
+    res = "OK"
+    if (nfacets == 1){
+      #      output$facetOptions <- renderUI({NULL})
+      output$facetOptions <- NULL
+    }else if (nfacets<=.GlobalEnv$limitPlots){
+      output$facetOptions <-
+        renderUI({
+          actionButton(inputId = 'facetRemover', label = paste0("Remove faceting"), icon = icon('layer-group'))
+        })
+      
+    } else if (nfacets>.GlobalEnv$limitPlots){
+      output$facetOptions <-
+        renderUI({
+          div(id="facetBlock",
+              paste0(input$facet, ' has ',nfacets,' unique values.  Perhaps too many to usefully facet by and QC?')
+              ,actionButton(inputId = 'facetOverride', label = paste0("Thanks, 'Dad', show all ",nfacets,"(!) plots"), icon = icon('layer-group'))
+          )
+        })
+      res = "warn"
+    }
+    return(res)
+  }
+  makePlot<-function(){
+    if (.GlobalEnv$debug) print("makeplot")
+    input$facetOverride
+    input$handleSelected
+    input$handleUnselected
+    input$unhide
+    input$showLm
+    input$showLoess
+    thisData    <- .GlobalEnv$dataObj
+    dataSizeCheck = dataSizeChecker(thisData)
+    if (dataSizeCheck=="fail")return(NULL)
+    thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
+    
+    x <- thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][!is.na(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$xaxis]),input$xaxis]
+    y <- thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][!is.na(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$yaxis]),input$yaxis]
+    nfacets = ifelse(input$facet == 'None',1,length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet])))
+    facetCheck = facetChecker(nfacets)
+    if (facetCheck=="warn")return(NULL)
+    
+    thePlot <- ggplot(data = thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),], 
+                      aes(color = QC_STATUS,shape = QC_STATUS,
+                          x=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$xaxis], 
+                          y=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$yaxis])) + geom_point() + xlab(input$xaxis) + ylab(input$yaxis) + scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED")) 
+      if (!is.null(input$plotchk)){
+        if (input$plotchk != 'none'){
+          thePlot <- thePlot + geom_smooth(method=input$plotchk, fill="red", color="red")
+        }
+      }
+    if(!input$facet == 'None') {
+      thePlot <- thePlot + facet_wrap(as.formula(paste('~', input$facet)),ncol=3)
+    }
+    thePlot <- thePlot + theme(legend.position="top") + coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = TRUE)
+    return(thePlot)
+  }
+  makeSelDataTable<-function(){
+    
+    if (.GlobalEnv$debug) print("makeSelDataTable")
+    input$handleSelected
+    input$handleUnselected
+    input$unhide
+    thisData<-.GlobalEnv$dataObj 
+    thisData = thisData[!thisData$QC_HIDDEN %in% TRUE,]
+    tableData = brushedPoints(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),],
+                              input$brush,
+                              xvar = input$xaxis,
+                              yvar = input$yaxis)
+    tableData = tableData[, !names(tableData) %in% c("QC_HIDDEN")] 
+    tableData = Mar.utils::drop_NA_cols(tableData)
+    return(tableData)
+  }
   
+  observeEvent(input$fBrowse,{
+    #this ensures that if a file is input, it gets handled
+    handleData("local", input$dataSel, input$fBrowse)
+  })
+  observeEvent(input$jBrowse,{
+    #this ensures that if a file is input, it gets handled
+    handleData("local", input$dataSel, input$jBrowse)
+  })
+  observeEvent(input$rBrowse,{
+    #this ensures that if a file is input, it gets handled
+    handleData("local", input$dataSel, input$rBrowse)
+  })
+  observeEvent(input$rdsBrowse,{
+    #this ensures that if a file is input, it gets handled
+    handleData("local", input$dataSel, input$rdsBrowse)
+  })
+  observeEvent(input$rObjSel,{
+    #this ensures that if an r object is picked, it gets handled
+    handleData("local", input$dataSel, input$rObjSel)
+  })
+  observeEvent(input$OcredSubmit,{
+    if (!is.null(.GlobalEnv$thisCxn)){
+      assign("thisCxn", NULL, envir = .GlobalEnv)
+      output$Oschema = renderUI({NULL})
+      output$Otable = renderUI({NULL})
+    }
+    handleData(input$dataSel, NULL, NULL)
+  })
+  observeEvent(input$Oschema,{
+    if (input$Oschema == "None")return(NULL)
+    handleData(input$dataSel, input$Oschema, NULL)
+  })
+  observeEvent(input$Otable,{
+    if (input$Otable == "None")return(NULL)
+    handleData(input$dataSel,input$Oschema,input$Otable)
+  })
+  observeEvent(input$dataSel,{
+    assign("dataObj",NULL, .GlobalEnv)
+    assign("dataObjFields",NULL, .GlobalEnv)
+    output$xaxis = renderUI({NULL})
+    output$yaxis = renderUI({NULL})
+    output$facet = renderUI({NULL})
+    output$saveMsg = renderText("Nothing to report")
+    output$loadstatus =renderUI({NULL})
+    output$facetText =renderUI({NULL})
+    output$fBrowse = renderUI({NULL})
+    output$jBrowse = renderUI({NULL})
+    output$rBrowse = renderUI({NULL})
+    
+    output$rdsBrowse = renderUI({NULL})
+    output$rObjSel = renderUI({NULL})
+    output$OcredUsePkg = renderUI(NULL)
+    output$OcredName = renderUI({NULL})
+    output$OcredPass = renderUI({NULL})
+    output$OcredDSN = renderUI({NULL})
+    output$OcredSubmit = renderUI({NULL})
+    output$Oschema = renderUI({NULL})
+    output$Otable = renderUI({NULL})
+    ranges$x <- NULL
+    ranges$y <- NULL
+    output$resetZoom = renderUI(NULL)
+    
+    if (input$dataSel %in% c("faithful","mtcars","pressure")){
+      handleData("sample",input$dataSel, NULL)
+    } else if (input$dataSel %in% c("robject","csvobject","qcobject","rdata","rdsobject")){
+      handleData("local", input$dataSel, NULL)
+    }else if (input$dataSel %in% c("oracle")){
+      handleData("oracle", NULL, NULL)
+    }
+  })
+  observeEvent(input$handleSelected,{
+    applyQC()
+  })
+  observeEvent(input$handleUnselected,{
+    applyQC("inverted")
+  })
+  observeEvent(input$plotchk,{
+  })
+  # observeEvent(input$showLm,{})
+  # observeEvent(input$showLoess,{
+  #  # assign("showLoess", input$showLoess, envir = .GlobalEnv)
+  # })
   observeEvent(input$unhide, {
     thisData = .GlobalEnv$dataObj
     thisData[thisData$QC_HIDDEN ==TRUE,"QC_HIDDEN"]<-FALSE
     assign("dataObj",thisData,envir = .GlobalEnv)
-    output$unhide = renderUI("")
+    output$unhide = renderUI({NULL})
   })
   observeEvent(input$saveDet,{
     #This saves the data so that you can use it to fix the original source
@@ -387,7 +514,22 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "inTabset",
                       selected = "Help")
   })
-  
+  observeEvent(input$distPlot_dblclick, {
+    brush <- input$brush
+    if (!is.null(brush)) {
+      ranges$x <- c(brush$xmin, brush$xmax)
+      ranges$y <- c(brush$ymin, brush$ymax)
+      output$resetZoom = renderUI(actionButton('resetZoom', label = "Return to full extent of data", icon('search-minus')))
+    } else {
+      ranges$x <- NULL
+      ranges$y <- NULL
+    }
+  })
+  observeEvent(input$resetZoom, {
+      ranges$x <- NULL
+      ranges$y <- NULL
+      output$resetZoom = renderUI(NULL)
+  })
   selected <- reactive({
     input$brush
     invert = FALSE
@@ -399,68 +541,17 @@ server <- function(input, output, session) {
                           yvar = input$yaxis)
     return(brushed)
   })
-  
-  dataSizeChecker<-function(df){
-    # if (is.null(df))return(NULL)
-    res = "OK"
-    nrowData = nrow(df)
-    dataSizeMB = as.numeric(sub(pattern = " Mb",x = format(object.size(df),units = "Mb"),replacement = ""))
-    if (is.null(nrowData)){
-      output$hugeDataWarn <- NULL
-    }else if (dataSizeMB > 100){
-      #limit exceeded
-      output$hugeDataWarn <-
-        renderUI({
-          #these tags are here instead of UI so they can be on one line
-          div(div(style="display:inline-block;float:both", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's too much for this app. Please filter the data in r to create a smaller r object"))
-              ,div(style="clear:both")
-          )
-        })
-      res = "fail"
-    }else if (dataSizeMB > 20){
-      #upper limit warning
-      output$hugeDataWarn <-
-        renderUI({
-          #these tags are here instead of UI so they can be on one line
-          div(div(style="display:inline-block;float:both", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's a lot for this app.  Consider filtering the data in r to create a smaller r object."))
-              ,div(style="clear:both")
-          )
-        })
-      
-      res = "warn"
-    }else{
-      output$hugeDataWarn <- NULL
-    }
-    return(res)
-  }
-  facetChecker<-function(nfacets = 1){
-    res = "OK"
-    if (nfacets == 1){
-      output$facetOptions <- NULL
-    }else if (nfacets<=.GlobalEnv$limitPlots){
-      output$facetOptions <-
-        renderUI({
-          actionButton(inputId = 'facetRemover', label = paste0("Remove faceting"), icon = icon('layer-group'))
-        })
-    } else if (nfacets>.GlobalEnv$limitPlots){
-      output$facetOptions <-
-        renderUI({
-          div(
-            paste0(input$facet, ' has ',nfacets,' unique values.  Perhaps too many to usefully facet by and QC?')
-            ,actionButton(inputId = 'facetOverride', label = paste0("Thanks, 'Dad', show all ",nfacets,"(!) plots"), icon = icon('layer-group'))
-          )
-        })
-      res = "warn"
-    }
-    return(res)
-  }
   getPlotHeight <- reactive({
+    input$facetOverride
     input$facet
     if (is.null(input$facet))return(300)
     thisData    <- .GlobalEnv$dataObj
     if (is.null(thisData))return(1)
     thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
     nfacets = ifelse(input$facet == 'None',1,length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet])))
+    facetCheck = facetChecker(nfacets)
+    if (facetCheck=="warn")return(1)
+    
     plotRows = ceiling(nfacets/3)
     plotHeight = plotRows*300
     if (nfacets>.GlobalEnv$limitPlots){
@@ -470,51 +561,18 @@ server <- function(input, output, session) {
     }
     return(plotHeight)
   })  
-  makePlot<-function(){
-    input$facetOverride
-    input$handleSelected
-    input$handleUnselected
-    input$unhide
-    thisData    <- .GlobalEnv$dataObj
-    dataSizeCheck = dataSizeChecker(thisData)
-    if (dataSizeCheck=="fail")return(NULL)
-    thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
-    
-    
-    x <- thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][!is.na(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$xaxis]),input$xaxis]
-    y <- thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][!is.na(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$yaxis]),input$yaxis]
-    nfacets = ifelse(input$facet == 'None',1,length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet])))
-    facetCheck = facetChecker(nfacets)
-    if (facetCheck=="warn")return(NULL)
-    thePlot <- ggplot(data = thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),], 
-                      aes(color = QC_STATUS,shape = QC_STATUS,
-                          x=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$xaxis], 
-                          y=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$yaxis])) + geom_point() + xlab(input$xaxis) + ylab(input$yaxis) + scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED")) 
-    if(!input$facet == 'None') {
-      thePlot <- thePlot + facet_wrap(as.formula(paste('~', input$facet)),ncol=3)
-      
-    }
-    thePlot <- thePlot + theme(legend.position="top")
-    return(thePlot)
-  }
-  makeSelDataTable<-function(){
-    input$handleSelected
-    input$handleUnselected
-    input$unhide
-    thisData<-.GlobalEnv$dataObj 
-    thisData = thisData[!thisData$QC_HIDDEN %in% TRUE,]
-    tableData = brushedPoints(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),],
-                              input$brush,
-                              xvar = input$xaxis,
-                              yvar = input$yaxis)
-    tableData = tableData[, !names(tableData) %in% c("QC_HIDDEN")] 
-    tableData = Mar.utils::drop_NA_cols(tableData)
-    return(tableData)
-  }
+
+#height =function(){getPlotHeight()}
   output$distPlot <- renderPlot(height =function(){getPlotHeight()},{
     req(input$xaxis, input$yaxis)
-    if (is.null(.GlobalEnv$dataObj))return()
-    if (input$xaxis == input$yaxis)return()
+   
+    if (is.null(.GlobalEnv$dataObj)){
+      return()
+    }
+    if (input$xaxis == input$yaxis){
+      return()
+    }
+    
     makePlot()
   })
   output$selTable <- renderDataTable({
@@ -523,75 +581,4 @@ server <- function(input, output, session) {
     res = makeSelDataTable()
     return(res)
   })
-  
-  
-  
-  #below is all megaPlot stuff which is not yet working
-  # selectedMega <- reactive({
-  #   input$brushMega
-  #   thisData = getMegaData(coreField=input$xaxis)
-  #   brushedMega=brushedPoints(thisData,
-  #                 input$brushMega,
-  #                 xvar = 'value',
-  #                 yvar = input$xaxis)
-  #   print("making sel")
-  #   print(brushedMega)
-  #   return(brushedMega)
-  # })
-  # 
-  # getMegaPlotHeight <- reactive({
-  #   input$xaxis
-  #   thisData<- .GlobalEnv$dataObj
-  #   if (is.null(thisData))return(1)
-  #   thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
-  #   thisData = thisData[, !names(thisData) %in% c("QC_COMMENT", "QC_HIDDEN", "QC_STATUS")] 
-  #   nplots = ncol(thisData)-1
-  #   plotRows = ceiling(nplots/3)
-  #   plotHeight = plotRows*300
-  #   # print(plotHeight)
-  #   return(plotHeight)
-  # })
-  
-  # getMegaData = function(coreField = NULL){
-  #   if (is.null(.GlobalEnv$dataObj))return()
-  #   thisData    <- .GlobalEnv$dataObj
-  #   thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
-  #   thisData = thisData[!is.na(thisData[coreField]),]
-  #   thisData = thisData[, !names(thisData) %in% c("QC_COMMENT", "QC_HIDDEN", "QC_STATUS")] 
-  #   thisData = thisData %>% gather(-coreField , key = "var", value = "value")  
-  #   return(thisData)
-  # }  
-  # makeMegaPlot<-function(coreField){
-  #   input$xaxis
-  #   thisData = getMegaData(coreField)
-  #   thisMegaPlot =ggplot(data = thisData, aes(x = coreField, y = value )) + geom_point() + scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED")) + facet_wrap(~ var,ncol=3) + theme(legend.position="top")
-  #   return(thisMegaPlot)
-  # }
-  # makeSelDataTableMega<-function(coreField =NULL){
-  #   input$handleSelected
-  #   input$unhide
-  #   thisData = getMegaData(coreField)
-  # 
-  #   tableData=brushedPoints(thisData,
-  #                           input$brushMega,
-  #                           xvar = 'value',
-  #                           yvar = input$xaxis)
-  #    print("making table")
-  #   print(tableData)
-  #   #if (nrow(tableData)==0)browser()
-  #   return(tableData)
-  # }
-  # output$selTableMega <- renderDataTable({
-  #   req(input$xaxis)
-  #   if (is.null(.GlobalEnv$dataObj))return()
-  #   res = makeSelDataTableMega(coreField = input$xaxis)
-  #     return(res)
-  # })
-  # output$distPlotMega <- renderPlot(height =function(){getMegaPlotHeight()},{
-  #   req(input$xaxis)
-  #   if (is.null(.GlobalEnv$dataObj))return()
-  #   makeMegaPlot(coreField = input$xaxis)
-  # })
-  
-  
 }

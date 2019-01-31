@@ -1,67 +1,97 @@
 getHelp<-function(){
-  return(tagList(div(id = "helpText", h3('What is "Mar.JoyofQC"?')
-                 ,p("This is a Shiny app that facilitates the visualization of data.  
-                    It's purpose is to support the identification and flagging 
-                    of outliers in r objects, *.csv files and oracle tables.")
-                 ,h4("How do I See My Data?")
-                 ,p("On the left, there are controls for selecting and working with
-                    datasets. As you make choices, additional, relevant options
-                    will become available.  Datasets can be local R objects, csv files on your 
-                    computer, or Oracle tables you already have access to.  If you 
-                    choose a csv or an r object, you will be prompted to select it.  
-                    If you are working with Oracle, you will first need to provide 
-                    your Oracle credentials, then you will choose from the schema(s) 
-                    you have access to, and then select one of the tables from within 
-                    that schema.")
-                  ,p("Regardless of the datasource selected, 3 options become 
-                    available - 'x-axis', 'y-axis' and 'facet'.  X- and y-axis 
-                    selections simply control which field is plotted against which 
-                    other field.   Selecting a field to facet by results in the grouping 
-                    of data by shared values from the facet field.  For example, 
-                    you might choose to plot 'length' vs 'weight' (as the x and 
-                    y axes), but then facet the plots by 'species'.  The would 
-                    result in a separate length vs weight plot for each species.")
-                 ,h4("How Can I QC My Data?")
-                 ,p("As soon as you have selected an x- and y-axis, your data will 
-                  be plotted (and if you choose to facet your data, you will see 
-                  multiple plots).  The plots are dynamic, in that you can draw 
-                  boxes on them to select sets of data.  The underlying values of the selected data is 
-                  always shown below the plot(s).The first row of tools at the 
-                  top of the page work on the selected data, and allow you to flag data as
-                  'good' or 'bad', and (optionally) add a comment describing why 
-                  you feel that way.  The QC_STATUS (i.e. good or bad) and the 
-                  values for QC_COMMENT will all be included in your output.")
-                 ,p("Additionally, selected data can simply be hidden rather than 
-                  having a QC status applied. This can be useful if the presence 
-                  of some data if causing the majority of the data to be 'squashed' 
-                  near the origin.  Choosing to hide the data doesn't apply a QC 
-                  status, but simply results in a button appearing that will allow
-                  you to unhide the data.")
-                 ,p("Lastly, it can be helpful to apply your QC status and then 
-                    hide that data in one step.  To make this happen, make sure that 
-                    the 'Hide QC'd data' box is ticked.")
-                 ,h4("How Can I Save My Work?")
-                 ,p("The second row of tools above the plot(s) relate to saving 
-                  the results of your QC session, and allow you to save every record 
-                  (plus the additional columns 'QC_STATUS' and 'QC_COMMENT'), or 
-                  just the records you have flagged as good or bad in QC_STATUS.
-                  If possible, not all columns will be saved - if there is a unique 
-                  field in your data, it alone will be saved with the QC results.  
-                  The purpose of this application is not to generate new datasets, 
-                  but to allow you to go back to original datasets and fix values 
-                  there.  Data is saved both as an R object to local environment, 
-                  as well as a csv to your working directory.") 
-                 ,h4("Facet Notes")
-                 ,p("Depending on the facet selections, you may get a warning that 
-                  too many plots will be generated to be useful (i.e. more than 20).  
-                  Should this be the case, a button will be presented allowing you 
-                  to override the warning and show all of the plots regardless. 
-                  If you decide to view all of the plots, another button will replace 
-                  the warning that will allow you to easilt 'de-facet your data.")
-                 )
-                 ,h4("I Need More Help!")
-                 ,p("For assistance with this app, please contact ", a("Mike McMahon", href = "mailto:Mike.McMahon@dfo-mpo.gc.ca"))
-                 ,p("This is my first Shiny app, so please be gentle.")
-  )
-  )
+return(tagList(div(id = "helpText"
+,h3('What is "Mar.JoyofQC"?')
+,p("This is a Shiny app that facilitates the visualization of data.  
+It's purpose is to support the identification and flagging 
+of outliers in r objects, *.csv files and oracle tables.
+")
+,p("In short, you load data into the app, plot various fields against
+eachother, and use the plot(s) to identify data that's interesting.  
+Points on the plot(s) can be selected to reveal the underlying 
+data, and can be flagged as 'good' or 'bad', and comments can 
+be applied to the records. When you're done, you can save your 
+work such that you have a list of all of the records you need 
+to edit in the source location.  Alternatively, you can save
+your session so that you can return to your QC'ing another
+time without forgetting where you were.  What a Joy!
+")
+,p("The app has a number of controls that allow you to do all 
+of this stuff, and an outline of the app
+(as of Jan 25, 2019) is shown below, with the various sections
+identified with numbers.  The sections are described below the 
+image.
+")
+,img(src="joyofqcMap.png",style="width:600px")
+,h4("Box #1")
+,p("The top left of the app shows the version number, and whether or not a newer version 
+exists.  Please ensure you are always using the newest possible version.")
+,h4("Box #2")
+,p("On the left are controls for selecting and working with
+datasets. Box #2 lets you choose which dataset you want to look 
+at (i.e. csv, oracle, etc).")
+,h4("Box #3")
+,p("Depending on your dataset selection, additional boxes may appear here allowing you to do stuff like
+   navigate to local files, provide credentials, etc... ")
+,h4("Box #4")
+,p("Box #4 contains tools allowing you to decide how to plot your data.
+You can select any of your fields to use as x or y axes, and you can 
+also select an (optional) 'facet' field. This field groups the data by 
+shared values from the facet field, and will generate one plot for each unique 
+facet value.  For example, you might choose to plot 'length' vs 'weight' (as the x and 
+y axes), but then facet the plots by 'species'.  The would 
+result in a separate length vs weight plot for each species.
+")
+,h4("Box #5")
+,p("
+Box #5 shows buttons for saving your work.  There are 2, and they are slightly different.
+'",icon('save')," Save QC info' saves ONLY the records you've interacted with (i.e. set a status of 'good' or 'bad').
+The idea is that if you're working with a large dataset that you need to cleanup, you can use this button to 
+retain only those few records that have issues.
+")
+,p("
+Alternatively, '",icon('coffee')," Save QC session' saves the entire dataset, including comments, QC statuses, 
+whether data was hidden,  as well as any data you have not interacted with.  If you have a coworker, intern or some other person working with you, you can exchange *.joy files to see how they have categorized the data. 
+")
+,h4("Box #6")
+,p("
+This box contains the options for QC'ing your data.  The first row of tools at the 
+top of the page work on the selected data, and allow you to apply a QC status to individual records.
+The following actions can be applied to any selected data:")
+,p(class="tabbed", icon('undo')," - This returns rows to their orignal state - all QC information including comments is removed")
+,p(class="tabbed", icon('thumbs-up')," - This applies a value of 'good' to the QC_STATUS column.  Data with this status will be shown as red squares.")
+,p(class="tabbed", icon('thumbs-down')," - This applies a value of 'bad' to the QC_STATUS column.  Data with this status will be shown as blue triangles.")
+,p(class="tabbed", icon('eye-slash')," - This does not modify the data, but causes the selection to be hidden")
+,p(class="tabbed", "(yellow text box) - Text written in this box is applied to all of the selected records.")
+,p(class="tabbed", icon('check-square'),"'Hide QC'd data' - If this box is ticked, QC information will be applied, and the data will be hidden immediately after.")
+,p(class="tabbed", icon('eye')," - If data is hidden, an 'Unhide all' button bearing this image will be shown, allowing you to reveal all of the data again")   
+,p("Nothing happens with the selections you made above until you click either ",icon('arrow-right')," Apply to Selected Points' or '",icon('random')," Apply to Unselected Points'.
+Most of the time, you will be working with your seletion, but sometimes it might be nice to able to easily work on all of the other data instead.")
+,h5("These options are dumb")
+,p("True - it's unlikely that your data can be classified as 'good' or 'bad'.  However, before you do any QC work, your data is all the same.  Applying 'good' to some identifies it
+as being somehow different than the unhandled data.  Applying 'bad' to others distinguishes the data in another way.  'Good' and 'Bad' are more intuitive than some other generic method like 
+grouping your data into categories like 'state 1', 'state2', 'state3', etc. ")
+,h5("Why hide data?")
+,p("
+'Hiding' data doesn't just hide the data, but also causes the map to be redrawn.  This means that outliers can
+cause the majority of the data to be 'squashed'  near the origin.  Choosing to hide the data doesn't apply a QC
+status, but makes the rest of the data more visible.  The option to 'Hide QC'd data' arose from the fact that a lot of QC checks consisted of identifying
+outliers.  These outliers skew the plots and make the rest of the data difficult to assess.  This option just reduces the number of steps.
+")            
+,h4("Box #7")
+,p("Since the purpose is to QC the data, these options allow you to show the 95% confidence intervals for the data (using either lm or loess).")       
+,h4("Box #8")
+,p("
+This is a warning area.  Should you try to add a large (>20MB) csv, you'll get a warning, or even an error if it's greater than 100MB.  If you try to facet by a field that would result in more than 20 plots, you'll be warned as well.
+")
+,h4("Box #9")
+,p("As you drag on the data, you select the points.  If you double-click the selection box, you can zoom into that data.  This button appears if you have zoomed in, and allows you to return to the full extent of the data."))
+,h4("Box #10")
+,p("This is your plot area.  Depending on your selected facet options, at least one plot will be shown here.  Plots here are always interactive - you can draw boxes on them to select points, and selected points are impacted by 
+the tools above.  Unassessed, 'Good' and 'Bad' data are all displayed differently. Selections can be double-clicked to zoom in.  Data for selected points are displayed in the table below.")
+,h4("Box #11")
+,p("This is where the underlying data for selected points is shown.  Any QC decisions or comments you've applied will be visible here.  Data can be sorted or filtered using tools within the table.")
+,h4("I Need More Help!")
+,p("For assistance with this app, please contact ", a("Mike McMahon", href = "mailto:Mike.McMahon@dfo-mpo.gc.ca"),"(Population Ecology Division, DFO). This is my first Shiny app, so please be gentle.")
+)
+)
 }
