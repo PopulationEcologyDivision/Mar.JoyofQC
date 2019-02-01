@@ -93,7 +93,10 @@ server <- function(input, output, session) {
         }
       }else if (specific == "robject" ){
         if (is.null(theobj)){
-          localObjs= sort(names(which(unlist(eapply(.GlobalEnv,is.data.frame)))))
+          localObjsDFs= names(which(unlist(eapply(.GlobalEnv,is.data.frame))))
+          localObjsMats= names(which(unlist(eapply(.GlobalEnv,is.matrix))))
+          localObjsLists= names(which(unlist(eapply(.GlobalEnv,is.list))))
+          localObjs = sort(c(localObjsMats,localObjsDFs, localObjsLists))
           if (length(localObjs)<1){
             output$rObjSel = renderUI({NULL})
           }else{
@@ -124,8 +127,16 @@ server <- function(input, output, session) {
                                               multiple = FALSE))
           if (is.null(input$rdsBrowse))return()
         }else{
-          dataSelToLoad = readRDS(theobj$datapath)
-          output$saveMsg <- renderText("rds file loaded")
+          dataSelToLoad <- tryCatch({
+            readRDS(theobj$datapath)
+          },
+          error = function(cond){
+          })
+          if (is.null(dataSelToLoad)){
+            output$saveMsg <- renderText("Can't find data in this object")
+            return()
+          }
+          output$saveMsg <- renderText("rds file loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
         } 
       }else if (specific == "rdata" ){
         if (is.null(theobj)){
@@ -134,15 +145,22 @@ server <- function(input, output, session) {
                                               multiple = FALSE))
           if (is.null(input$rBrowse))return()
         }else{
-          
           loadRData <- function(fileName){
-            #weird function to load rdata to known name
+            #function to load rdata to known variable name
             load(fileName)
             get(ls()[ls() != "fileName"])
           }
-          dataSelToLoad <- loadRData(theobj$datapath)
-          
-          output$saveMsg <- renderText("Rdata loaded")
+          dataSelToLoad <- tryCatch({
+            loadRData(theobj$datapath)
+          },
+          error = function(cond) {
+          })
+          if (is.null(dataSelToLoad)){
+            output$saveMsg <- renderText("Can't find data in this object")
+            return()
+          }
+
+          output$saveMsg <- renderText("Rdata loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
         } 
       }
     }else if (type == "oracle"){
@@ -200,7 +218,7 @@ server <- function(input, output, session) {
         if (is.null(.GlobalEnv$thisCxn)) {
           cxn = makeOracleCxn()
           if (is.null(cxn)){
-            print("cxn failed")
+            output$saveMsg <- renderText("cxn failed")
             return(NULL)
           }
         }
@@ -219,10 +237,35 @@ server <- function(input, output, session) {
       }
     }
     
-    if (is.null(dataSelToLoad)) {return()}
-    if (attr(class(dataSelToLoad),"package")=="sp"){
+    if (is.null(dataSelToLoad)) {
+      output$saveMsg <- renderText("No data found")
+      return()
+    }
+
+    dataclass = class(dataSelToLoad)
+    if (dataclass == "data.frame"){
+      #types that work fine
+    }else if (dataclass %in% c("SpatialPolygonsDataFrame","SpatialLinesDataFrame","SpatialPointsDataFrame","SpatialMultiPointsDataFrame")){
+      #sp objects can have dataframe we can look at
       dataSelToLoad=dataSelToLoad@data
       output$saveMsg <- renderText("file was sp:: object - loading dataframe from that object")
+    } else if (dataclass == "list"){
+      dataSelToLoad <- tryCatch({
+        as.data.frame(dataSelToLoad)
+      },
+      error = function(cond) {
+      })
+      if (is.null(dataSelToLoad)){
+        output$saveMsg <- renderText("Data not accessible (is it a list?)")
+        return()
+      }
+      output$saveMsg <- renderText("Coerced list data to dataframe)")
+    }else if (dataclass =="matrix") {
+      dataSelToLoad=data.frame(dataSelToLoad)
+      output$saveMsg <- renderText("Matrix converted to df and loaded")
+    }else{
+      output$saveMsg <- renderText(paste0("This app does not know how to deal with this class of object (",dataclass,").  Please create a simpler object (e.g. a df)"))
+      return()
     }
     if (specific != "qcobject"){
       dataSelToLoad$QC_STATUS <-"UNASSESSED"
@@ -232,12 +275,9 @@ server <- function(input, output, session) {
     if (.GlobalEnv$debug) print(head(dataSelToLoad))
     assign("dataObj",dataSelToLoad,envir = .GlobalEnv)
     assign("dataObjFields",colnames(dataSelToLoad),envir = .GlobalEnv)
-    # paste0(a("Mar.QCJoy", href = "https://github.com/Maritimes/Mar.JoyofQC"), " <br><span style='font-size:0.5em;'>v.",.GlobalEnv$Mar.JoyOfQC," </span>")
     output$plotchk = renderUI(div(radioButtons("plotchk", label = a("Show 95% confidence intervals?    ",href="https://ggplot2.tidyverse.org/reference/geom_smooth.html", target="_blank"), 
                        choices = list("none" = "none", "auto"="auto", "lm"="lm", "glm"="glm", "gam"="gam", "loess"="loess"),
                        selected = "none")))
-    # output$plotchk = renderUI(div(outputid = "plotchk",checkboxInput("showLm", label = "Show 95% confidence intervals (linear)?",value = FALSE),
-    #                           checkboxInput("showLoess", label = "Show 95% confidence intervals (loess)?",value = FALSE)))
     populateDrops()
   }
   applyQC<-function(sel="normal"){
@@ -465,10 +505,6 @@ server <- function(input, output, session) {
   })
   observeEvent(input$plotchk,{
   })
-  # observeEvent(input$showLm,{})
-  # observeEvent(input$showLoess,{
-  #  # assign("showLoess", input$showLoess, envir = .GlobalEnv)
-  # })
   observeEvent(input$unhide, {
     thisData = .GlobalEnv$dataObj
     thisData[thisData$QC_HIDDEN ==TRUE,"QC_HIDDEN"]<-FALSE

@@ -24,6 +24,16 @@ body {
   width: 280px;
  float:left;
 }
+.Pseudolabel{
+   width:100%;
+   display:block;
+  font-family:"Trebuchet MS", Helvetica, sans-serif;
+  font-size:14px;
+  font-weight:bold;
+  margin-bottom:5px;
+  text-align:center;
+}
+
 #logodiv {
    width: 280px;
   text-align:right;
@@ -114,7 +124,7 @@ body {
   vertical-align:bottom;
   text-align:center;
 }
-img {
+#distPlot img {
   border:1px solid black;
 }
 #selDetInput {
@@ -146,6 +156,8 @@ img {
 
 #saveMsg {
   background-color:#e6d8ad;
+  margin-top:1.5em;
+  padding:5px;
   text-align:left; 
   vertical-align: top;
 }

@@ -53,6 +53,9 @@ Alternatively, '",icon('coffee')," Save QC session' saves the entire dataset, in
 whether data was hidden,  as well as any data you have not interacted with.  If you have a coworker, intern or some other person working with you, you can exchange *.joy files to see how they have categorized the data. 
 ")
 ,h4("Box #6")
+,p("These are the tabs that allow you to switch between the interface and the help.  But you already knew that.")
+,h4("Box #7")
+,h5("Available Tools")
 ,p("
 This box contains the options for QC'ing your data.  The first row of tools at the 
 top of the page work on the selected data, and allow you to apply a QC status to individual records.
@@ -64,34 +67,29 @@ The following actions can be applied to any selected data:")
 ,p(class="tabbed", "(yellow text box) - Text written in this box is applied to all of the selected records.")
 ,p(class="tabbed", icon('check-square'),"'Hide QC'd data' - If this box is ticked, QC information will be applied, and the data will be hidden immediately after.")
 ,p(class="tabbed", icon('eye')," - If data is hidden, an 'Unhide all' button bearing this image will be shown, allowing you to reveal all of the data again")   
+,h5("Applying the tools")
 ,p("Nothing happens with the selections you made above until you click either ",icon('arrow-right')," Apply to Selected Points' or '",icon('random')," Apply to Unselected Points'.
 Most of the time, you will be working with your seletion, but sometimes it might be nice to able to easily work on all of the other data instead.")
-,h5("These options are dumb")
-,p("True - it's unlikely that your data can be classified as 'good' or 'bad'.  However, before you do any QC work, your data is all the same.  Applying 'good' to some identifies it
-as being somehow different than the unhandled data.  Applying 'bad' to others distinguishes the data in another way.  'Good' and 'Bad' are more intuitive than some other generic method like 
-grouping your data into categories like 'state 1', 'state2', 'state3', etc. ")
-,h5("Why hide data?")
-,p("
-'Hiding' data doesn't just hide the data, but also causes the map to be redrawn.  This means that outliers can
-cause the majority of the data to be 'squashed'  near the origin.  Choosing to hide the data doesn't apply a QC
-status, but makes the rest of the data more visible.  The option to 'Hide QC'd data' arose from the fact that a lot of QC checks consisted of identifying
-outliers.  These outliers skew the plots and make the rest of the data difficult to assess.  This option just reduces the number of steps.
-")            
-,h4("Box #7")
-,p("Since the purpose is to QC the data, these options allow you to show the 95% confidence intervals for the data (using either lm or loess).")       
+,h5("Confidence Intervals")
+,p("Since the purpose is to QC the data, these options allow you to show the 95% confidence intervals for the data.  There 
+ are  a variety of methods for doing this, and they are described <a href='https://ggplot2.tidyverse.org/reference/geom_smooth.html', target='_blank'>here</a>.")       
 ,h4("Box #8")
 ,p("
-This is a warning area.  Should you try to add a large (>20MB) csv, you'll get a warning, or even an error if it's greater than 100MB.  If you try to facet by a field that would result in more than 20 plots, you'll be warned as well.
+This is a warning area.  Should you try to add a large (>20MB) csv, you'll get a warning, 
+or even an error if it's greater than 100MB.  If you try to facet by a field that would 
+result in more than 20 plots, you'll be warned as well.
 ")
 ,h4("Box #9")
-,p("As you drag on the data, you select the points.  If you double-click the selection box, you can zoom into that data.  This button appears if you have zoomed in, and allows you to return to the full extent of the data."))
+,p("As you drag on the data, you select the points.  If you double-click the selection box, 
+   you can zoom into that data.  This button appears once you have zoomed in, and allows you 
+   to return to the full extent of the data."))
 ,h4("Box #10")
 ,p("This is your plot area.  Depending on your selected facet options, at least one plot will be shown here.  Plots here are always interactive - you can draw boxes on them to select points, and selected points are impacted by 
 the tools above.  Unassessed, 'Good' and 'Bad' data are all displayed differently. Selections can be double-clicked to zoom in.  Data for selected points are displayed in the table below.")
 ,h4("Box #11")
 ,p("This is where the underlying data for selected points is shown.  Any QC decisions or comments you've applied will be visible here.  Data can be sorted or filtered using tools within the table.")
 ,h4("I Need More Help!")
-,p("For assistance with this app, please contact ", a("Mike McMahon", href = "mailto:Mike.McMahon@dfo-mpo.gc.ca"),"(Population Ecology Division, DFO). This is my first Shiny app, so please be gentle.")
+,p("For assistance with this app, please contact ", a("Mike McMahon", href = "mailto:Mike.McMahon@dfo-mpo.gc.ca"),"(Population Ecology Division, DFO).")
 )
 )
 }

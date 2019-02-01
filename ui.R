@@ -4,17 +4,17 @@ library(tidyr)
 library(shinyjs)
 ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico")),
   theme = "styles.css"
-  ,titlePanel(windowTitle = "Mar.QCJoy"
+  ,titlePanel(windowTitle = "Mar.JoyofQC"
               , div(id="logodiv",img(src="logo.PNG", height=100, style="float:left;") 
                     ,htmlOutput(outputId="versionCheck"),div(class="clearer")))
   ,sidebarLayout(
     sidebarPanel(selectInput("dataSel", label ="Select data type",
                              choices=c("None"="None",
-                                       "*.csv file" = "csvobject",
                                        "local r object" = "robject",
+                                       "*.csv file" = "csvobject",
                                        "*.rda/*.rdata file" = "rdata",
                                        "*.rds file" = "rdsobject",
-                                       "*.joy (old qc session)" = "qcobject",
+                                       "*.joy (qc session)" = "qcobject",
                                        "Oracle" = "oracle",
                                        "<sample data>"="mtcars"))
                  ,htmlOutput("rObjSel")
@@ -32,9 +32,11 @@ ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico"
                  ,htmlOutput("xaxis")
                  ,htmlOutput("yaxis")
                  ,htmlOutput("facet")
+                 ,div(class="Pseudolabel", span("Save your work"))
                  ,actionButton(inputId = 'saveDet', label = 'Save QC info', icon = icon('save'))
                  ,actionButton(inputId = 'saveSess', label = 'Save QC session', icon = icon('coffee'))
                  ,div(class="clearer")
+                 ,div(class="Pseudolabel", span("Notices"))
                  ,div(textOutput("saveMsg")
                  ))
     ,mainPanel(id = "mainPanel"
