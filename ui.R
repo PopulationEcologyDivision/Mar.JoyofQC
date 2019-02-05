@@ -1,10 +1,11 @@
 library(shiny)
 library(ggplot2)
 library(tidyr)
-library(shinyjs)
+
 ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico")),
-  theme = "styles.css"
-  ,titlePanel(windowTitle = "Mar.JoyofQC"
+
+  theme = "styles.css",
+  titlePanel(windowTitle = "Mar.JoyofQC"
               , div(id="logodiv",img(src="logo.PNG", height=100, style="float:left;") 
                     ,htmlOutput(outputId="versionCheck"),div(class="clearer")))
   ,sidebarLayout(
@@ -29,6 +30,13 @@ ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico"
                  ,htmlOutput("OcredSubmit")
                  ,htmlOutput("Oschema")
                  ,htmlOutput("Otable")
+                 ,div(id = "filtOptions"
+                   ,htmlOutput("filtFields")
+                   ,htmlOutput("filtFieldVals")
+                   ,htmlOutput("filtApply")
+                   ,htmlOutput("filtRem")
+                 )
+
                  ,htmlOutput("xaxis")
                  ,htmlOutput("yaxis")
                  ,htmlOutput("facet")

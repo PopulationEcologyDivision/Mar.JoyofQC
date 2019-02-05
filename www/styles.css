@@ -3,6 +3,12 @@ body {
    font-family: "Trebuchet MS", Helvetica, sans-serif; 
    margin:0;
 }
+.fa.fa-tag{
+   color: transparent;
+   -webkit-text-stroke-width: 2px;
+   -webkit-text-stroke-color: red;
+ }
+ 
 .nav-tabs{
   border-bottom:0 transparent;
 }
@@ -128,7 +134,7 @@ body {
   border:1px solid black;
 }
 #selDetInput {
-  background-color:#e6d8ad;
+  background-color:orange;
   vertical-align:top;
   padding-right:5px;
   width:200px;
@@ -155,7 +161,7 @@ body {
 }
 
 #saveMsg {
-  background-color:#e6d8ad;
+  background-color:orange;
   margin-top:1.5em;
   padding:5px;
   text-align:left; 
