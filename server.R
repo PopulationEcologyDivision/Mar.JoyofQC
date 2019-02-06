@@ -1,11 +1,10 @@
 server <- function(input, output, session) {
   options(shiny.maxRequestSize=100*1024^2)  #max Upload size jacked to 100MB
   options(stringsAsFactors = F)
-  limitPlots = 20
   plotHeight = 300
-  plotCols = 6
+  plotCols = 3
   qcprompt = "QC Comment (optional)"
-  debug = TRUE
+  debug = FALSE
   Mar.JoyOfQC =  scan("version.txt",quiet = T)
   
   ovalues <- reactiveValues(
@@ -23,7 +22,7 @@ server <- function(input, output, session) {
     limitPlots = 20
   )
   
-
+  
   
   output$plotchk <- renderUI(NULL)
   output$hugeDataWarn <- renderUI(NULL)
@@ -51,7 +50,7 @@ server <- function(input, output, session) {
   output$versionCheck <- renderUI(HTML(updMsg))
   
   source("getHelp.R")
-
+  
   output$getHelp<-renderUI({
     getHelp()
   })
@@ -59,26 +58,11 @@ server <- function(input, output, session) {
   #these tags are here instead of UI because they're dynamic
   output$selDet = renderUI(textInput(inputId = "selDetInput", label = "",value = qcprompt))
   output$unhide = renderUI("")
-
+  
   observeEvent(input$fBrowse,{
-      if (debug) print("input$fBrowse")
+    if (debug) print("input$fBrowse")
     #this ensures that if a file is input, it gets handled
     handleData("local", input$dataSel, input$fBrowse)
-  })
-  observeEvent(input$jBrowse,{
-    if (debug) print("input$jBrowse")
-    #this ensures that if a file is input, it gets handled
-    handleData("local", input$dataSel, input$jBrowse)
-  })
-  observeEvent(input$rBrowse,{
-    if (debug) print("input$rBrowse")
-    #this ensures that if a file is input, it gets handled
-    handleData("local", input$dataSel, input$rBrowse)
-  })
-  observeEvent(input$rdsBrowse,{
-    if (debug) print("input$rdsBrowse")
-    #this ensures that if a file is input, it gets handled
-    handleData("local", input$dataSel, input$rdsBrowse)
   })
   observeEvent(input$rObjSel,{
     if (debug) print("input$rObjSel")
@@ -108,14 +92,9 @@ server <- function(input, output, session) {
     output$xaxis = renderUI({NULL})
     output$yaxis = renderUI({NULL})
     output$facet = renderUI({NULL})
-    output$saveMsg = renderText("Nothing to report")
     output$loadstatus =renderUI({NULL})
     output$facetText =renderUI({NULL})
     output$fBrowse = renderUI({NULL})
-    output$jBrowse = renderUI({NULL})
-    output$rBrowse = renderUI({NULL})
-    
-    output$rdsBrowse = renderUI({NULL})
     output$rObjSel = renderUI({NULL})
     output$OcredUsePkg = renderUI(NULL)
     output$OcredName = renderUI({NULL})
@@ -124,9 +103,16 @@ server <- function(input, output, session) {
     output$OcredSubmit = renderUI({NULL})
     output$Oschema = renderUI({NULL})
     output$Otable = renderUI({NULL})
+    output$filtFields = renderUI({NULL})
+    output$filtFieldVals = renderUI({NULL})
+    output$filtApply = renderUI({NULL})
+    output$filtRem = renderUI({NULL})
     ranges$x <- NULL
     ranges$y <- NULL
     output$resetZoom = renderUI(NULL)
+   
+    output$saveMsg = renderText("Nothing to report")
+    if (is.null(values$currentDataObj)) output$saveMsg = renderText("No data loaded")
     
     if (input$dataSel %in% c("faithful","mtcars","pressure")){
       handleData("sample",input$dataSel, NULL)
@@ -155,17 +141,63 @@ server <- function(input, output, session) {
     #This saves the data so that you can use it to fix the original source
     ts = format(Sys.time(), "%Y%m%d_%H%M")
     fn = paste0("qcResults_",ts,".csv")
-    thisData = values$currentdataObj
+    
+    thisData = rbind(values$currentdataObj,values$currentdataObjFilt)
+    nullrows <- nullXRows<- nullYRows <- nullFRows<- nullXYFRows <- nullXYRows <- NULL
+    if (input$includeNULLS) {
+      nullXRows = thisData[is.na(thisData[input$xaxis]),!names(thisData) %in% c("QC_COMMENT")]
+      nullYRows = thisData[is.na(thisData[input$yaxis]),!names(thisData) %in% c("QC_COMMENT")]
+      nullXYRows <- merge(nullXRows, nullYRows) 
+      
+      if (input$facet != "None") {
+        nullFRows = thisData[is.na(thisData[input$facet]),!names(thisData) %in% c("QC_COMMENT")]
+        nullXYFRows <- merge(nullXYRows, nullFRows) 
+        fs <- rbind(nullXYFRows,nullFRows)
+        Fonly = fs[! duplicated(fs, fromLast=TRUE) & seq(nrow(fs)) <= nrow(nullFRows), ]
+        if (nrow(nullXYFRows)>0){
+          nullXYFRows$QC_COMMENT<-paste0("missing values for ", input$xaxis, ", ", input$yaxis, ", ", input$facet)
+        }
+        if (nrow(Fonly)>0){
+          Fonly$QC_COMMENT<-paste0("missing values for ", input$facet)
+        }
+      }
+      
+      xs <- rbind(nullXYRows, nullXRows)
+      ys <- rbind(nullXYRows, nullYRows)
+      Xonly = xs[! duplicated(xs, fromLast=TRUE) & seq(nrow(xs)) <= nrow(nullXRows), ]
+      Yonly = ys[! duplicated(ys, fromLast=TRUE) & seq(nrow(ys)) <= nrow(nullYRows), ]
+      
+      if (nrow(nullXYRows)>0){
+        nullXYRows$QC_COMMENT<-paste0("missing values for ", input$xaxis, ", ", input$yaxis)
+      }
+      if (nrow(Xonly)>0){
+        Xonly$QC_COMMENT<-paste0("missing values for ", input$xaxis)
+      }
+      if (nrow(Yonly)>0){
+        Yonly$QC_COMMENT<-paste0("missing values for ", input$yaxis)
+      }
+      nullrows = rbind(nullXYRows, Xonly)
+      nullrows = rbind(nullrows, Yonly)
+      nullrows = rbind(nullrows, Fonly)
+      
+      if (nrow(nullrows)>0){
+        nullrows$QC_STATUS<-"BAD"
+        nullrows$QC_HIDDEN<-"FALSE"
+      }
+    }
+    
     thisData=thisData[thisData$QC_STATUS != "UNASSESSED",]
+    thisData=rbind(thisData,nullrows)
     assign(paste0("qcResults_",ts), thisData,envir = .GlobalEnv)
     write.csv(thisData,fn, row.names = FALSE)
     output$saveMsg <- renderText(paste0("Output available in R as ",paste0("qcResults_",ts)," and saved as ", paste0(getwd(),"/",fn)))
   })
+  
   observeEvent(input$saveSess,{
     #This saves the data so that you can open it up again and keep working
     ts = format(Sys.time(), "%Y%m%d_%H%M")
     fn = paste0("qcSession_",ts,".joy")
-    thisData = values$currentdataObj
+    thisData = rbind(values$currentdataObj,values$currentdataObjFilt)
     write.csv(thisData, fn, row.names = FALSE)
     output$saveMsg <- renderText(paste0("Session saved as ", paste0(getwd(),"/",fn)))
   })
@@ -189,7 +221,6 @@ server <- function(input, output, session) {
     x=rbind(thisData, thisDataFilt)
     thisDataUnfilt = x[! duplicated(x, fromLast=TRUE) & seq(nrow(x)) <= nrow(thisData), ]
     values$currentdataObj = thisDataFilt
-    print(paste0("In filtApply, dataObj has: ",nrow(values$currentdataObj)))
     values$currentdataObjFilt = thisDataUnfilt
     output$saveMsg <- renderText(paste0("Filtered data to only include values where ",input$filtFields," have values like ",paste0(input$filtFieldVals, collapse = ",")))
     output$filtApply = renderUI(actionButton('filtApply', label = "Apply filter", icon('filter')))
@@ -209,7 +240,7 @@ server <- function(input, output, session) {
     output$filtFieldVals = renderUI(NULL)
     output$filtApply = renderUI(NULL)
     output$saveMsg <- renderText("Filter removed")
- 
+    
   })
   observeEvent(input$facetOverride,{
     if (values$limitPlots ==20){
@@ -253,7 +284,7 @@ server <- function(input, output, session) {
                           yvar = input$yaxis)
     return(brushed)
   })
- 
+  
   
   
   
@@ -282,19 +313,58 @@ server <- function(input, output, session) {
       dataSelToLoad = get(specific)
       output$saveMsg <- renderText("Sample data loaded")
     } else if (type=="local"){
-      if (specific == "csvobject"){
+      
+      
+      if (specific %in% c("csvobject","rdsobject","qcobject","rdata")){
         if (is.null(theobj)){
           output$fBrowse = renderUI(fileInput("fBrowse", "Choose *.csv file",
                                               accept = c(
                                                 "text/csv",
                                                 "text/comma-separated-values,text/plain",
-                                                ".csv","csv"),
+                                                ".csv","csv",
+                                                "joy",".joy",
+                                                "rds",".rds",
+                                                "rdata",".rdata","rda",".rda"),
                                               multiple = FALSE))
           if (is.null(input$fBrowse))return()
         }else{
-          dataSelToLoad = read.csv(theobj$datapath)
-          output$saveMsg <- renderText("Local csv object loaded")
+          ft = tools::file_ext(theobj$datapath)
+          if (ft %in% c('csv','joy')){
+            dataSelToLoad = read.csv(theobj$datapath)
+            output$saveMsg <- renderText("Local csv object loaded")
+          }else if (ft %in% 'rds'){
+            dataSelToLoad <- tryCatch({
+                    readRDS(theobj$datapath)
+                  },
+                  error = function(cond){
+                  })
+                  if (is.null(dataSelToLoad)){
+                    output$saveMsg <- renderText("Can't find data in this object")
+                    return()
+                  }
+                  output$saveMsg <- renderText("rds file loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
+          }else if (ft %in% c("rdata","rda")){
+            loadRData <- function(fileName){
+                    #function to load rdata to known variable name
+                    load(fileName)
+                    get(ls()[ls() != "fileName"])
+                  }
+                  dataSelToLoad <- tryCatch({
+                    loadRData(theobj$datapath)
+                  },
+                  error = function(cond) {
+                  })
+                  if (is.null(dataSelToLoad)){
+                    output$saveMsg <- renderText("Can't find data in this object")
+                    return()
+                  }
+
+                  output$saveMsg <- renderText("Rdata loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
+          }
         }
+                                                     
+        
+        
       }else if (specific == "robject" ){
         if (is.null(theobj)){
           localObjsDFs= names(which(unlist(eapply(.GlobalEnv,is.data.frame))))
@@ -313,59 +383,6 @@ server <- function(input, output, session) {
           dataSelToLoad = get(theobj)
           output$saveMsg <- renderText("Local r object loaded")
         }
-      }else if (specific == "qcobject" ){
-        if (is.null(theobj)){
-          output$jBrowse = renderUI(fileInput("jBrowse", "Choose a *.joy file",
-                                              accept = c("joy",".joy"),
-                                              multiple = FALSE))
-          if (is.null(input$jBrowse))return()
-        }else{
-          dataSelToLoad = read.csv(theobj$datapath)
-          output$saveMsg <- renderText("Saved qc session loaded")
-        } 
-      }else if (specific == "rdsobject" ){
-        
-        if (is.null(theobj)){
-          output$rdsBrowse = renderUI(fileInput("rdsBrowse", "Choose an *.rds file",
-                                                accept = c("rds",".rds"),
-                                                multiple = FALSE))
-          if (is.null(input$rdsBrowse))return()
-        }else{
-          dataSelToLoad <- tryCatch({
-            readRDS(theobj$datapath)
-          },
-          error = function(cond){
-          })
-          if (is.null(dataSelToLoad)){
-            output$saveMsg <- renderText("Can't find data in this object")
-            return()
-          }
-          output$saveMsg <- renderText("rds file loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
-        } 
-      }else if (specific == "rdata" ){
-        if (is.null(theobj)){
-          output$rBrowse = renderUI(fileInput("rBrowse", "Choose an *.rdata/*.rda file",
-                                              accept = c("rdata",".rdata","rda",".rda"),
-                                              multiple = FALSE))
-          if (is.null(input$rBrowse))return()
-        }else{
-          loadRData <- function(fileName){
-            #function to load rdata to known variable name
-            load(fileName)
-            get(ls()[ls() != "fileName"])
-          }
-          dataSelToLoad <- tryCatch({
-            loadRData(theobj$datapath)
-          },
-          error = function(cond) {
-          })
-          if (is.null(dataSelToLoad)){
-            output$saveMsg <- renderText("Can't find data in this object")
-            return()
-          }
-          
-          output$saveMsg <- renderText("Rdata loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
-        } 
       }
     }else if (type == "oracle"){
       getOracleCreds<-function(){
@@ -470,7 +487,9 @@ server <- function(input, output, session) {
       output$saveMsg <- renderText(paste0("This app does not know how to deal with this class of object (",dataclass,").  Please create a simpler object (e.g. a df)"))
       return()
     }
-    if (specific != "qcobject"){
+    
+    if (!all(c("QC_STATUS","QC_COMMENT","QC_HIDDEN") %in% colnames(dataSelToLoad))){
+      #will overwrite values if data only has a couple of these
       dataSelToLoad$QC_STATUS <-"UNASSESSED"
       dataSelToLoad$QC_COMMENT <-NA
       dataSelToLoad$QC_HIDDEN<-FALSE
@@ -513,7 +532,7 @@ server <- function(input, output, session) {
     updateTextInput(session, "selDetInput", label = NULL, value = qcprompt)
     
     if (nrow(thisData[thisData$QC_HIDDEN ==TRUE,])>0){
-      output$unhide = renderUI(tagList(actionButton(inputId = 'unhide', label = 'Unhide All', icon = icon('eye'))),tags$style("#unhide","{text-align: center; vertical-align: middle;clear:both}"))
+      output$unhide = renderUI(tagList(actionButton(inputId = 'unhide', label = 'Unhide All', icon = icon('eye'))),)
     }else{
       output$unhide = renderUI({NULL})
     }
@@ -561,13 +580,13 @@ server <- function(input, output, session) {
     if (nfacets == 1){
       #      output$facetOptions <- renderUI({NULL})
       output$facetOptions <- NULL
-    }else if (nfacets<=limitPlots){
+    }else if (nfacets<=values$limitPlots){
       output$facetOptions <-
         renderUI({
           actionButton(inputId = 'facetRemover', label = paste0("Remove faceting"), icon = icon('layer-group'))
         })
       
-    } else if (nfacets>limitPlots){
+    } else if (nfacets>values$limitPlots){
       output$facetOptions <-
         renderUI({
           div(id="facetBlock",
@@ -618,15 +637,16 @@ server <- function(input, output, session) {
   }
   
   makePlot<-function(thedf = NULL, conf = NULL, facet=NULL){
-    thisData = thedf
-    thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
-    thePlot <- ggplot(data = thisData, 
+    conf = ifelse(is.null(conf),"none", conf)
+    plottableData <-thedf[which(!(thedf$QC_HIDDEN %in% TRUE) & !is.na(thedf[,input$xaxis]) & !is.na(thedf[,input$yaxis])),]
+    
+    thePlot <- ggplot(data = plottableData, 
                       aes(color = QC_STATUS,shape = QC_STATUS,
-                          x=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$xaxis], 
-                          y=thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$yaxis])) + 
-                          geom_point() + xlab(input$xaxis) + ylab(input$yaxis)  + 
-                          scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + 
-                          scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED"))
+                          x=plottableData[,input$xaxis], 
+                          y=plottableData[,input$yaxis])) + 
+      geom_point() + xlab(input$xaxis) + ylab(input$yaxis)  + 
+      scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + 
+      scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED"))
     if (conf != 'none'){
       thePlot <- thePlot + geom_smooth(method=conf, fill="red", color="red")
     }
@@ -641,6 +661,7 @@ server <- function(input, output, session) {
   output$distPlot <- renderPlot(width = "auto", height =function(){getPlotHeight()},{
     req(input$xaxis, input$yaxis)
     thisData <- values$currentdataObj
+    if(is.null(thisData))return(NULL)
     input$plotchk
     input$facet
     input$facetOverride
@@ -653,7 +674,7 @@ server <- function(input, output, session) {
     nfacets = ifelse(input$facet == 'None',1,length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet])))
     if (facetChecker(nfacets)=="warn")return(NULL)
     makePlot(thedf =thisData,  conf = input$plotchk,  facet= input$facet)
-     })
+  })
   
   output$selTable <- renderDataTable({
     req(input$xaxis, input$yaxis)
