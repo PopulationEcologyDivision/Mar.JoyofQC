@@ -101,6 +101,7 @@ body {
 #chk,#qcAction,#selDet,#dataSel,#unhide,#saveDet ,#saveSess, #handleSelected, #handleUnselected  {
   display:inline-block;
   vertical-align:top;
+  margin-top:5px;
   padding-right:5px;
   clear:both;
   height:2em;
@@ -121,9 +122,10 @@ body {
   display:inline-block;
   width:260px;
 }
-.checkbox{
+#chk{
+  display:inline-block;
+  height:3em;
   vertical-align:middle;
-  margin:15px;
 }
 
 #plotchk {
@@ -137,8 +139,10 @@ body {
 }
 
 #plotchk.shiny-html-output.shiny-bound-output>div{
+  
+  padding-top:5px;
   display:inline-block;
-  height:1.5em;
+  height:5em;
    text-align: center; 
 }
 #plotchk label {
@@ -199,6 +203,11 @@ h4{
   padding:0;
 }
 #resetZoom{
+  display:block;
+   width:320px;
+   margin-left:-12px;
+  margin-top:1.5em;
+  text-align: center; 
   text-align: left; 
 }
 

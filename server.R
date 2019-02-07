@@ -1,7 +1,7 @@
 server <- function(input, output, session) {
   options(shiny.maxRequestSize=100*1024^2)  #max Upload size jacked to 100MB
   options(stringsAsFactors = F)
-  plotHeight = 300
+  plotHeight = 490
   plotCols = 3
   qcprompt = "QC Comment (optional)"
   debug = FALSE
@@ -57,7 +57,7 @@ server <- function(input, output, session) {
   
   #these tags are here instead of UI because they're dynamic
   output$selDet = renderUI(textInput(inputId = "selDetInput", label = "",value = qcprompt))
-  output$unhide = renderUI("")
+  output$unhideBox = renderUI("")
   
   observeEvent(input$fBrowse,{
     if (debug) print("input$fBrowse")
@@ -135,7 +135,7 @@ server <- function(input, output, session) {
     thisData = values$currentdataObj
     thisData[thisData$QC_HIDDEN ==TRUE,"QC_HIDDEN"]<-FALSE
     values$currentdataObj= thisData
-    output$unhide = renderUI({NULL})
+    output$unhideBox = renderUI({NULL})
   })
   observeEvent(input$saveDet,{
     #This saves the data so that you can use it to fix the original source
@@ -532,9 +532,9 @@ server <- function(input, output, session) {
     updateTextInput(session, "selDetInput", label = NULL, value = qcprompt)
     
     if (nrow(thisData[thisData$QC_HIDDEN ==TRUE,])>0){
-      output$unhide = renderUI(tagList(actionButton(inputId = 'unhide', label = 'Unhide All', icon = icon('eye'))),)
+      output$unhideBox = renderUI(actionButton(inputId = 'unhide', label = 'Unhide All', icon = icon('eye')))
     }else{
-      output$unhide = renderUI({NULL})
+      output$unhideBox = renderUI({NULL})
     }
     
     values$currentdataObj = thisData

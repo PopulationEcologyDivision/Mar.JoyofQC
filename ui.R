@@ -37,6 +37,7 @@ ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico"
                                                ,htmlOutput("yaxis")
                                                ,htmlOutput("facet")
                                                ,htmlOutput("facetOptions")
+                                               ,htmlOutput("plotchk")
                                            )
                                   ),
                                   tabPanel("Filter",
@@ -56,12 +57,12 @@ ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico"
                                                             choiceValues = list("undo","good","bad","ugly"), selected = "bad", inline=T)
                                                ,htmlOutput("selDet")
                                                ,div(id = "chk", checkboxInput("hideHandled", label = "Hide QC'd data",value = FALSE))
-                                               ,htmlOutput("unhide")
+                                               ,div(class="clearer")
+                                               ,htmlOutput("unhideBox")
                                                ,div(class="clearer")
                                                ,actionButton('handleSelected', label = "Apply to Selected Points", icon('arrow-right'))
                                                ,actionButton('handleUnselected', label = "Apply to Unselected Points", icon('random'))
-                                               ,htmlOutput("plotchk")
-                                               ,htmlOutput("resetZoom")
+                                               ,div(class="clearer")
                                            )
                                   ),
                                   tabPanel("Save",
@@ -75,6 +76,8 @@ ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico"
                                            )
                                   )
                       )
+                      
+                      ,htmlOutput("resetZoom")
                       ,div(textOutput("saveMsg"))
                       ,div(class="clearer")
          )
@@ -99,5 +102,4 @@ ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico"
                     
          )
        )
-       ,tagList(hr())
 )
