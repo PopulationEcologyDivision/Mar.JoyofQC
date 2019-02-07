@@ -108,4 +108,4 @@ The area identifies the version of the app you are using, and whether or not a n
 This is a status info area that provides information about recent actions 
 
 ### I Need More Help!
-For assistance with this app, please contact [email Mike McMahon](mailto:Mike.McMahon@dfo-mpo.gc.ca) (Population Ecology Division, DFO)
+For assistance with this app, please contact [Mike McMahon](mailto:Mike.McMahon@dfo-mpo.gc.ca) (Population Ecology Division, DFO)
