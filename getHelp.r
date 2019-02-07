@@ -21,9 +21,6 @@ of this stuff, and an outline of the app
 identified with numbers.  The sections are described below the 
 image.
 ")
-,img(src="01_overview.png",style="width:600px;float:left;")
-,p("The general areas of the app are identified below, and these will be discussed 
-in further detail by the numeric labels.")
 ,img(src="02_map.png",style="width:600px;float:left;")
 ,h4("Box #1")
 ,p("This is your plot area.  Depending on your selected facet options, at least 
@@ -76,7 +73,7 @@ The following actions can be applied to any selected data:")
 ,p(class="tabbed", icon('thumbs-up')," - This applies a value of 'good' to the QC_STATUS column.  Data with this status will be shown as red squares.")
 ,p(class="tabbed", icon('thumbs-down')," - This applies a value of 'bad' to the QC_STATUS column.  Data with this status will be shown as blue triangles.")
 ,p(class="tabbed", icon('eye-slash')," - This does not modify the data, but causes the selection to be hidden")
-,p(class="tabbed", "(yellow text box) - Text written in this box is applied to all of the selected records.")
+,p(class="tabbed", "(orange text box) - Text written in this box is applied to all of the selected records.")
 ,p(class="tabbed", icon('check-square'),"'Hide QC'd data' - If this box is ticked, QC information will be applied, and the data will be hidden immediately after.")
 ,p(class="tabbed", icon('eye')," - If data is hidden, an 'Unhide all' button bearing this image will be shown, allowing you to reveal all of the data again")   
 ,h5("Applying the tools")
