@@ -1,7 +1,5 @@
 library(shiny)
 library(ggplot2)
-library(tidyr)
-library(htmlwidgets)
 
 ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico")),
   theme = "styles.css",
