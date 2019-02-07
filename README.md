@@ -67,7 +67,7 @@ the individual tabs is shown below.
 
 #### Data
 
-|..........................|                                                    |
+|..............................................................................|..........................................................................................................................................................................................................................................|
 |--------------------------|----------------------------------------------------|
 |![Data](www/02_display.png) | This will be the only thing tool shown initially, and lets you choose which dataset you want to look at (i.e. csv, rds, rdata, oracle, etc). This (default) tab contains tools allowing you to decide how to plot your data. You can select any of your fields to use as x or y axes, and you can also select an (optional) 'facet' field. This field groups the data by shared values from the facet field, and will generate one plot for each unique facet value.  For example, you might choose to plot 'length' vs 'weight' (as the x and y axes), but then facet the plots by 'species'.  The would result in a separate length vs weight plot for each species. Since the purpose is to QC the data, these options allow you to show the 95% confidence intervals for the data.  There   are  a variety of methods for doing this, and they are described  [here](https://ggplot2.tidyverse.org/reference/geom_smooth.html)|
 
