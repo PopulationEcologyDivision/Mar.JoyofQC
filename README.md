@@ -67,17 +67,17 @@ the individual tabs is shown below.
 
 #### Data
 
-| |  |
+|------------------------------------------------------------------------------ |  |
 |--------------------------|----------------------------------------------------|
-|![Data](www/02_display.png){:width="300px"} | This will be the only thing tool shown initially, and lets you choose which dataset you want to look at (i.e. csv, rds, rdata, oracle, etc). This (default) tab contains tools allowing you to decide how to plot your data. You can select any of your fields to use as x or y axes, and you can also select an (optional) 'facet' field. This field groups the data by shared values from the facet field, and will generate one plot for each unique facet value.  For example, you might choose to plot 'length' vs 'weight' (as the x and y axes), but then facet the plots by 'species'.  The would result in a separate length vs weight plot for each species. Since the purpose is to QC the data, these options allow you to show the 95% confidence intervals for the data.  There   are  a variety of methods for doing this, and they are described  [here](https://ggplot2.tidyverse.org/reference/geom_smooth.html)|
+|![Data](www/02_display.png) | This will be the only thing tool shown initially, and lets you choose which dataset you want to look at (i.e. csv, rds, rdata, oracle, etc). This (default) tab contains tools allowing you to decide how to plot your data. You can select any of your fields to use as x or y axes, and you can also select an (optional) 'facet' field. This field groups the data by shared values from the facet field, and will generate one plot for each unique facet value.  For example, you might choose to plot 'length' vs 'weight' (as the x and y axes), but then facet the plots by 'species'.  The would result in a separate length vs weight plot for each species. Since the purpose is to QC the data, these options allow you to show the 95% confidence intervals for the data.  There   are  a variety of methods for doing this, and they are described  [here](https://ggplot2.tidyverse.org/reference/geom_smooth.html)|
 
 #### Filter
-|                          |                                                    |
+|------------------------------------------------------------------------------|                                                    |
 |--------------------------|----------------------------------------------------|
 |![Filter](www/03_filter.png) | In this tab, you can identify a field by which you would like to filter your data.Once a field has been selected, a second box gets populated allowing you to select from any of the values that appear in that field.  Modifications here will change which data is displayed (and available for QC).  Data that is not displayed still exists,    and will still be present (retaining your QC efforts) in any saved files. |
 
 #### QC
-|                          |                                                    |
+|------------------------------------------------------------------------------|                                                    |
 |--------------------------|----------------------------------------------------|
 |![QC](www/04_QC.png)| This box contains the options for QC'ing your data.  The first row of tools at the top of the page work on the selected data, and allow you to apply a QC status to individual records.The following actions can be applied to any selected data: |
 
@@ -94,7 +94,7 @@ Nothing happens with the selections you made above until you click either ![appl
 Most of the time, you will be working with your seletion, but sometimes it might be nice to able to easily work on all of the other data instead.
 
 #### Save
-|                          |                                                    |
+|------------------------------------------------------------------------------|                                                    |
 |--------------------------|----------------------------------------------------|
 |![Save](www/05_Save.png) |This tab shows buttons for saving your work.  There are 2, and they are slightly different. ![save](www/fa-save.png) Save QC info' saves ONLY the records you've interacted with (i.e. set a status of 'good' or 'bad').  The idea is that if you're working with a large dataset that you need to cleanup, you can use this button to retain only those few records that have issues.Alternatively, ![session](www/fa-coffee.png) Save QC session' saves the entire dataset, including comments, QC statuses, whether data was hidden,  as well as any data you have not interacted with.  If you have a coworker, intern or some other person working with you, you can exchange *.joy files to see how they have categorized the data.|
 
