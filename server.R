@@ -22,7 +22,7 @@ server <- function(input, output, session) {
     limitPlots = 20
   )
   
-  
+  #### YO MIKE THIS IS A COMMENT TEST. THIS APP SPARKS JOY :) 
   
   output$plotchk <- renderUI(NULL)
   output$hugeDataWarn <- renderUI(NULL)
