@@ -87,7 +87,6 @@ the individual tabs is shown below.
 *  ![hide](www/fa-eye-slash.png) - This does not modify the data, but causes the selection to be hidden
 *  (orange text box) - Text written in this box is applied to all of the selected records.
 *  ![checkbox](www/fa-check-square.png) 'Hide QC'd data' - If this box is ticked, QC information will be applied, and the data will be hidden immediately after.
-*  ![unhide](www/fa-eye.png) - If data is hidden, an 'Unhide all' button bearing this image will be shown, allowing you to reveal all of the data again
 
 #### Applying the tools
 Nothing happens with the selections you made above until you click either ![apply](www/fa-arrow-right.png) Apply to Selected Points' or ![invertapply](www/fa-random.png) Apply to Unselected Points'.
@@ -106,6 +105,10 @@ The area identifies the version of the app you are using, and whether or not a n
 
 ### Box #7
 This is a status info area that provides information about recent actions 
+
+*  ![unhide](www/fa-eye.png) - If data is hidden, an 'Unhide all' button bearing this image will be shown, allowing you to reveal all of the data again
+*  ![unhide](www/fa-search-minus.png) - If you have zoomed into a plot, a button labelled 'Return to the full extent of the data' will be shown
+* If you load large datasets, you'll be shown either a warning (>20MB) or a failure (>100MB) message here
 
 ### I Need More Help!
 For assistance with this app, please contact [Mike McMahon](mailto:Mike.McMahon@dfo-mpo.gc.ca) (Population Ecology Division, DFO)

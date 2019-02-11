@@ -186,7 +186,7 @@ padding-top:1em;
   clear:both;
 }
 
-#saveMsg {
+#saveMsg, #visWarn {
    display:block;
    width:320px;
    
@@ -198,6 +198,17 @@ padding-top:1em;
   border-radius:5px;
   padding:5px;
 }
+#visWarn {
+  border-color:darkorange;
+  background-color:orange;
+}
+#visFail {
+  border-color:darkred;
+  background-color:red;
+}
+
+
+
 h4{
   margin:3;
   padding:0;
@@ -215,16 +226,6 @@ h4{
   display:inline-block;
   text-align: center; 
   vertical-align: top;
-  width:100%;
-}
-#hugeDataWarn {
-
-  border-style:none;
-  border-color:#e6adbc;
-  display:inline-block;
-  text-align: center; 
-  vertical-align: top;
-  background-color:#e6adbc;
   width:100%;
 }
 #helpText{

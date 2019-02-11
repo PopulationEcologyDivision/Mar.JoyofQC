@@ -75,7 +75,6 @@ The following actions can be applied to any selected data:")
 ,p(class="tabbed", icon('eye-slash')," - This does not modify the data, but causes the selection to be hidden")
 ,p(class="tabbed", "(orange text box) - Text written in this box is applied to all of the selected records.")
 ,p(class="tabbed", icon('check-square'),"'Hide QC'd data' - If this box is ticked, QC information will be applied, and the data will be hidden immediately after.")
-,p(class="tabbed", icon('eye')," - If data is hidden, an 'Unhide all' button bearing this image will be shown, allowing you to reveal all of the data again")   
 ,h5("Applying the tools")
 ,p("Nothing happens with the selections you made above until you click either ",icon('arrow-right')," Apply to Selected Points' or '",icon('random')," Apply to Unselected Points'.
 Most of the time, you will be working with your seletion, but sometimes it might be nice to able to easily work on all of the other data instead.")
@@ -98,6 +97,10 @@ working with you, you can exchange *.joy files to see how they have categorized 
 exists.  Please ensure you are always using the newest possible version.")
 ,h4("Box #7")
 ,p("This is a status info area that provides information about recent actions")
+,p(class="tabbed", icon('eye')," - If any data is hidden, an 'Unhide all' button bearing this image will be shown, allowing you to reveal all of the data again")   
+,p(class="tabbed", icon('search-minus')," - If you have zoomed into a plot, a button labelled 'Return to the full extent of the data' will be shown.")   
+,p(class="tabbed", "If you load large datasets, you'll be shown either a warning (>20MB) or a failure (>100MB) message here")
+
 ,h4("I Need More Help!")
 ,p("For assistance with this app, please contact ", a("Mike McMahon", href = "mailto:Mike.McMahon@dfo-mpo.gc.ca"),"(Population Ecology Division, DFO).")
 )))

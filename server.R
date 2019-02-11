@@ -494,6 +494,12 @@ server <- function(input, output, session) {
       dataSelToLoad$QC_COMMENT <-NA
       dataSelToLoad$QC_HIDDEN<-FALSE
     }
+    if (nrow(dataSelToLoad[dataSelToLoad$QC_HIDDEN ==TRUE,])>0){
+      output$unhideBox = renderUI(actionButton(inputId = 'unhide', label = 'Unhide All', icon = icon('eye')))
+    }else{
+      output$unhideBox = renderUI({NULL})
+    }
+    
     values$currentdataObj = dataSelToLoad
     values$currentdataObjFields = colnames(dataSelToLoad)
     output$plotchk = renderUI(div(radioButtons("plotchk", label = a("Show 95% confidence intervals?    ",href="https://ggplot2.tidyverse.org/reference/geom_smooth.html", target="_blank"), 
@@ -553,8 +559,7 @@ server <- function(input, output, session) {
       output$hugeDataWarn <-
         renderUI({
           #these tags are here instead of UI so they can be on one line
-          div(div(style="display:inline-block;float:both", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's too much for this app. Please filter the data in r to create a smaller r object"))
-              ,div(style="clear:both")
+          div(id="visFail", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's too much for this app. Please filter the data in r to create a smaller r object")
           )
         })
       res = "fail"
@@ -563,8 +568,7 @@ server <- function(input, output, session) {
       output$hugeDataWarn <-
         renderUI({
           #these tags are here instead of UI so they can be on one line
-          div(div(style="display:inline-block;float:both", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's a lot for this app.  Consider filtering the data in r to create a smaller r object."))
-              ,div(style="clear:both")
+          div(id="visWarn", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's a lot for this app.  Consider filtering the data in r to create a smaller r object.")
           )
         })
       

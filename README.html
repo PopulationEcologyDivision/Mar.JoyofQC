@@ -207,8 +207,8 @@ install.packages(&quot;ggplot2&quot;)</code></pre>
 <pre class="r"><code>setwd(&quot;C:/Users/me/Downloads/Mar.JoyofQC-master&quot;)
 shiny::runApp()</code></pre>
 </div>
-<div id="using" class="section level2">
-<h2>Using</h2>
+<div id="usage" class="section level2">
+<h2>Usage</h2>
 <p>In short, you load data into the app, plot various fields against eachother, and use the plot(s) to identify data that’s interesting.<br />
 Points on the plot(s) can be selected to reveal the underlying data, and can be flagged as ‘good’ or ‘bad’, and comments can be applied to the records. When you’re done, you can save your work such that you have a list of all of the records you need to edit in the source location. Alternatively, you can save your session so that you can return to your QC’ing another time without forgetting where you were. What a Joy!</p>
 <p>The app has a number of controls that allow you to do all of this stuff, and an outline of the app (as of Feb 7, 2019) is shown below, with the various sections identified with numbers. The sections are described below the image.</p>
@@ -240,8 +240,8 @@ Points on the plot(s) can be selected to reveal the underlying data, and can be 
 </colgroup>
 <thead>
 <tr class="header">
-<th>.</th>
-<th>.</th>
+<th>……………………………………………………………………</th>
+<th>…………………………………………………………………….</th>
 </tr>
 </thead>
 <tbody>
@@ -261,8 +261,8 @@ Points on the plot(s) can be selected to reveal the underlying data, and can be 
 </colgroup>
 <thead>
 <tr class="header">
-<th>.</th>
-<th>.</th>
+<th>……………………………………………………………………</th>
+<th>…………………………………………………………………….</th>
 </tr>
 </thead>
 <tbody>
@@ -282,8 +282,8 @@ Points on the plot(s) can be selected to reveal the underlying data, and can be 
 </colgroup>
 <thead>
 <tr class="header">
-<th>.</th>
-<th>.</th>
+<th>……………………………………………………………………</th>
+<th>…………………………………………………………………….</th>
 </tr>
 </thead>
 <tbody>
@@ -300,7 +300,6 @@ Points on the plot(s) can be selected to reveal the underlying data, and can be 
 <li><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAWCAIAAABVH8vfAAAACXBIWXMAABJ0AAASdAHeZh94AAAArElEQVR42u1U0RWAIAhkJ6dxFkdhEidhkv6LAsXUypd/xVfq3XUgCMukgM8JxeCcC3GGo1Gpi9QIvavDIw0IEQbGZymh60ZDDTpJSVYVk4gKQFdoZx40QozGFRM3CT3zJ19Qu9FzBod4rlViM9S4gq4hWezYI5lKx1qCdolscY2UMi3m4tYkl/xz5C9trFLyYUOWldGtZivdzVrS89bVhKHNVXs9/dL1/8M2HiteLD/WUkYAcQAAAABJRU5ErkJggg==" alt="hide" /> - This does not modify the data, but causes the selection to be hidden</li>
 <li>(orange text box) - Text written in this box is applied to all of the selected records.</li>
 <li><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAUCAIAAADtKeFkAAAACXBIWXMAABJ0AAASdAHeZh94AAAAW0lEQVR42mP4ShlgGF76d1YbEwSRs69TpN+4eif99UMcDZEmWT/Mx1BZgvpB6q/PjsSqmRj9UAVAIzA1E+l+ZDXoniLS/xBlWEJkIOKPSP1EGICSfIdb/iUZAADmt5Vm+5EIEQAAAABJRU5ErkJggg==" alt="checkbox" /> ‘Hide QC’d data’ - If this box is ticked, QC information will be applied, and the data will be hidden immediately after.</li>
-<li><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAASCAIAAADQR7l6AAAACXBIWXMAABJ0AAASdAHeZh94AAAAjElEQVR42uWT0RWAIAhF2clpnMVRnMRJmMR/DykqSFanv+LLgC7vPBHy64CvIzB6t4aPeAvBf7f+BaY5GpECdYWUEVGkXMv3BhtxDKxD6EgnqWHUJi2gFHDlwgtqZSVgi7AZgtA/wLCCi5MJTqcnT+HkPsTA4V6lyjux90LN36/GdjsFyVyrXzyzB1EAuXu6ek2jycwAAAAASUVORK5CYII=" alt="unhide" /> - If data is hidden, an ‘Unhide all’ button bearing this image will be shown, allowing you to reveal all of the data again</li>
 </ul>
 </div>
 <div id="applying-the-tools" class="section level4">
@@ -316,8 +315,8 @@ Points on the plot(s) can be selected to reveal the underlying data, and can be 
 </colgroup>
 <thead>
 <tr class="header">
-<th>.</th>
-<th>.</th>
+<th>……………………………………………………………………</th>
+<th>…………………………………………………………………….</th>
 </tr>
 </thead>
 <tbody>
@@ -340,10 +339,15 @@ Points on the plot(s) can be selected to reveal the underlying data, and can be 
 <div id="box-7" class="section level3">
 <h3>Box #7</h3>
 <p>This is a status info area that provides information about recent actions</p>
+<ul>
+<li><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAASCAIAAADQR7l6AAAACXBIWXMAABJ0AAASdAHeZh94AAAAjElEQVR42uWT0RWAIAhF2clpnMVRnMRJmMR/DykqSFanv+LLgC7vPBHy64CvIzB6t4aPeAvBf7f+BaY5GpECdYWUEVGkXMv3BhtxDKxD6EgnqWHUJi2gFHDlwgtqZSVgi7AZgtA/wLCCi5MJTqcnT+HkPsTA4V6lyjux90LN36/GdjsFyVyrXzyzB1EAuXu6ek2jycwAAAAASUVORK5CYII=" alt="unhide" /> - If data is hidden, an ‘Unhide all’ button bearing this image will be shown, allowing you to reveal all of the data again</li>
+<li><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAUCAIAAADtKeFkAAAACXBIWXMAABJ0AAASdAHeZh94AAAAh0lEQVR42mP4TxlgGGz6HyyINkYB0QseEKsfQy9hMxgwdaMqPliP1wQGNIVY1EHNrT+IVz9O7XA5rAYwYKiBOhgO4EL49UNcSb79MHsxVRHnf6TYQ1aJPVJwpR90vxNOBAw4PIscfohkhWkEkekfYSiaEcTnH7gRKAFJUv4DGoHuA4YhXn4AAAFwMYU95NlyAAAAAElFTkSuQmCC" alt="unhide" /> - If you have zoomed into a plot, a button labelled ‘Return to the full extent of the data’ will be shown</li>
+<li>If you load large datasets, you’ll be shown either a warning (&gt;20MB) or a failure (&gt;100MB) message here</li>
+</ul>
 </div>
 <div id="i-need-more-help" class="section level3">
 <h3>I Need More Help!</h3>
-<p>For assistance with this app, please contact <a href="mailto:Mike.McMahon@dfo-mpo.gc.ca">email Mike McMahon</a> (Population Ecology Division, DFO)</p>
+<p>For assistance with this app, please contact <a href="mailto:Mike.McMahon@dfo-mpo.gc.ca">Mike McMahon</a> (Population Ecology Division, DFO)</p>
 </div>
 </div>
 </div>
