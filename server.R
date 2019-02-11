@@ -42,7 +42,7 @@ server <- function(input, output, session) {
     #can't contact github repo
   }else if (Mar.JoyOfQC > Mar.JoyOfQCRemote){
     updMsg =paste0(updMsg,"<br><span style='font-size:0.5em;color:red;'><b>&lt;Push to Github!&gt;</b></span>")
-  }else if (Mar.JoyOfQC > Mar.JoyOfQCRemote){
+  }else if (Mar.JoyOfQC < Mar.JoyOfQCRemote){
     updMsg =paste0(updMsg,"<span style='font-size:0.5em;color:red;'>&lt;Outdated!&gt;</span>")
   }else{
     updMsg =paste0(updMsg,"<span style='font-size:0.5em;color:blue;'>&lt;Current&gt;</span>")
