@@ -616,7 +616,7 @@ server <- function(input, output, session) {
     if (facetCheck=="warn")return(1)
     plotRows = ceiling(nfacets/plotCols )
     plotHeight = plotRows*plotHeight
-    if (nfacets>limitPlots){
+    if (nfacets>values$limitPlots){
       if (is.null(input$facetOverride)){
         plotHeight = 1
       }
