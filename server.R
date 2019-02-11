@@ -148,7 +148,7 @@ server <- function(input, output, session) {
       nullXRows = thisData[is.na(thisData[input$xaxis]),!names(thisData) %in% c("QC_COMMENT")]
       nullYRows = thisData[is.na(thisData[input$yaxis]),!names(thisData) %in% c("QC_COMMENT")]
       nullXYRows <- merge(nullXRows, nullYRows) 
-      
+      Fonly = NULL
       if (input$facet != "None") {
         nullFRows = thisData[is.na(thisData[input$facet]),!names(thisData) %in% c("QC_COMMENT")]
         nullXYFRows <- merge(nullXYRows, nullFRows) 
@@ -178,7 +178,11 @@ server <- function(input, output, session) {
       }
       nullrows = rbind(nullXYRows, Xonly)
       nullrows = rbind(nullrows, Yonly)
-      nullrows = rbind(nullrows, Fonly)
+      if (!is.null(Fonly)){
+        if (nrow(Fonly)>0){
+          nullrows = rbind(nullrows, Fonly)
+        }
+      }
       
       if (nrow(nullrows)>0){
         nullrows$QC_STATUS<-"BAD"
@@ -190,7 +194,7 @@ server <- function(input, output, session) {
     thisData=rbind(thisData,nullrows)
     assign(paste0("qcResults_",ts), thisData,envir = .GlobalEnv)
     write.csv(thisData,fn, row.names = FALSE)
-    output$saveMsg <- renderText(paste0("Output available in R as ",paste0("qcResults_",ts)," and saved as ", paste0(getwd(),"/",fn)))
+    output$saveMsg <- renderText(paste0("Output available in R as ",paste0("qcResults_",ts)," and saved as ", paste0(getwd(),"/ ",fn)))
   })
   
   observeEvent(input$saveSess,{
