@@ -419,7 +419,7 @@ server <- function(input, output, session) {
         return(ovalues$thisCxn)
       }
       showSchemaPick<-function(){
-        schemas = ovalues$thisCxn$thecmd(ovalues$thisCxn$channel,paste0("select distinct(table_schema) OWNER from all_tab_privs WHERE GRANTEE = '",ovalues$OUser,"' ORDER BY OWNER"))
+        schemas = ovalues$thisCxn$thecmd(ovalues$thisCxn$channel,paste0("select distinct(table_schema) OWNER from all_tab_privs WHERE GRANTEE = '",ovalues$OUser,"' OR GRANTOR = '",ovalues$OUser,"' ORDER BY OWNER"))
         output$Oschema <- renderUI(selectInput("Oschema",
                                                label = "Select a schema",
                                                choices = c("None",schemas$OWNER),
@@ -427,7 +427,7 @@ server <- function(input, output, session) {
         return(schemas)
       }
       showTablePick<-function(){
-        tbls = ovalues$thisCxn$thecmd(ovalues$thisCxn$channel,paste0("select TABLE_NAME from all_tab_privs WHERE table_schema = '",ovalues$Oschema,"' AND GRANTEE = '",ovalues$OUser,"' ORDER BY TABLE_NAME"))
+        tbls = ovalues$thisCxn$thecmd(ovalues$thisCxn$channel,paste0("select TABLE_NAME from all_tab_privs WHERE table_schema = '",ovalues$Oschema,"' AND GRANTEE = '",ovalues$OUser,"' OR GRANTOR = '",ovalues$OUser,"' ORDER BY TABLE_NAME"))
         output$Otable = renderUI(selectInput("Otable",
                                              label = "Select a table",
                                              choices =c("None",tbls$TABLE_NAME),
@@ -456,8 +456,11 @@ server <- function(input, output, session) {
         showTablePick()
       }else{
         ovalues$Otable<-toupper(theobj)
+
         dataSelToLoad <- ovalues$thisCxn$thecmd(ovalues$thisCxn$channel,paste0("SELECT * FROM ",ovalues$Oschema,".",ovalues$Otable))
+        
         output$saveMsg <- renderText("Oracle data loaded")
+
       }
     }
     
@@ -654,7 +657,7 @@ server <- function(input, output, session) {
                           y=plottableData[,input$yaxis])) + 
       geom_point() + xlab(input$xaxis) + ylab(input$yaxis)  + 
       scale_shape_manual(name = "QC_STATUS", values =c("UNASSESSED" = 16, "GOOD"=17, "BAD"=15)) + 
-      scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="RED"))
+      scale_color_manual(name = "QC_STATUS", values =c("UNASSESSED" = "black", "GOOD"="blue", "BAD"="red"))
     if (conf != 'none'){
       thePlot <- thePlot + geom_smooth(method=conf, fill="red", color="red")
     }
