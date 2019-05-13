@@ -19,10 +19,9 @@ server <- function(input, output, session) {
     currentdataObj = NULL,
     currentdataObjFilt = NULL,
     currentdataObjFields = NULL,
-    limitPlots = 20
+    limitPlots = 20,
+    dataORButt = NULL
   )
-  
-  #### YO MIKE THIS IS A COMMENT TEST. THIS APP SPARKS JOY :) 
   
   output$plotchk <- renderUI(NULL)
   output$hugeDataWarn <- renderUI(NULL)
@@ -61,16 +60,19 @@ server <- function(input, output, session) {
   
   observeEvent(input$fBrowse,{
     if (debug) print("input$fBrowse")
+    values$dataORButt = NULL
     #this ensures that if a file is input, it gets handled
     handleData("local", input$dataSel, input$fBrowse)
   })
   observeEvent(input$rObjSel,{
     if (debug) print("input$rObjSel")
+    values$dataORButt = NULL
     #this ensures that if an r object is picked, it gets handled
     handleData("local", input$dataSel, input$rObjSel)
   })
   observeEvent(input$OcredSubmit,{
     if (debug) print("input$OcredSubmit")
+    values$dataORButt = NULL
     if (!is.null(ovalues$thisCxn)){
       ovalues$thisCxn<-NULL
       output$Oschema = renderUI({NULL})
@@ -89,6 +91,7 @@ server <- function(input, output, session) {
   observeEvent(input$dataSel,{
     values$currentdataObj = NULL
     values$currentdataObjFields = NULL
+    values$dataORButt = NULL
     output$xaxis = renderUI({NULL})
     output$yaxis = renderUI({NULL})
     output$facet = renderUI({NULL})
@@ -110,7 +113,7 @@ server <- function(input, output, session) {
     ranges$x <- NULL
     ranges$y <- NULL
     output$resetZoom = renderUI(NULL)
-   
+    
     output$saveMsg = renderText("Nothing to report")
     if (is.null(values$currentDataObj)) output$saveMsg = renderText("No data loaded")
     
@@ -136,6 +139,9 @@ server <- function(input, output, session) {
     thisData[thisData$QC_HIDDEN ==TRUE,"QC_HIDDEN"]<-FALSE
     values$currentdataObj= thisData
     output$unhideBox = renderUI({NULL})
+  })
+  observeEvent(input$dataORButt, {
+    values$dataORButt<-1
   })
   observeEvent(input$saveDet,{
     #This saves the data so that you can use it to fix the original source
@@ -338,35 +344,35 @@ server <- function(input, output, session) {
             output$saveMsg <- renderText("Local csv object loaded")
           }else if (ft %in% 'rds'){
             dataSelToLoad <- tryCatch({
-                    readRDS(theobj$datapath)
-                  },
-                  error = function(cond){
-                  })
-                  if (is.null(dataSelToLoad)){
-                    output$saveMsg <- renderText("Can't find data in this object")
-                    return()
-                  }
-                  output$saveMsg <- renderText("rds file loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
+              readRDS(theobj$datapath)
+            },
+            error = function(cond){
+            })
+            if (is.null(dataSelToLoad)){
+              output$saveMsg <- renderText("Can't find data in this object")
+              return()
+            }
+            output$saveMsg <- renderText("rds file loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
           }else if (ft %in% c("rdata","rda")){
             loadRData <- function(fileName){
-                    #function to load rdata to known variable name
-                    load(fileName)
-                    get(ls()[ls() != "fileName"])
-                  }
-                  dataSelToLoad <- tryCatch({
-                    loadRData(theobj$datapath)
-                  },
-                  error = function(cond) {
-                  })
-                  if (is.null(dataSelToLoad)){
-                    output$saveMsg <- renderText("Can't find data in this object")
-                    return()
-                  }
-
-                  output$saveMsg <- renderText("Rdata loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
+              #function to load rdata to known variable name
+              load(fileName)
+              get(ls()[ls() != "fileName"])
+            }
+            dataSelToLoad <- tryCatch({
+              loadRData(theobj$datapath)
+            },
+            error = function(cond) {
+            })
+            if (is.null(dataSelToLoad)){
+              output$saveMsg <- renderText("Can't find data in this object")
+              return()
+            }
+            
+            output$saveMsg <- renderText("Rdata loaded - if this isn't what you expected, try to create a simpler object (e.g. a df)")
           }
         }
-                                                     
+        
         
         
       }else if (specific == "robject" ){
@@ -456,11 +462,11 @@ server <- function(input, output, session) {
         showTablePick()
       }else{
         ovalues$Otable<-toupper(theobj)
-
+        
         dataSelToLoad <- ovalues$thisCxn$thecmd(ovalues$thisCxn$channel,paste0("SELECT * FROM ",ovalues$Oschema,".",ovalues$Otable))
         
         output$saveMsg <- renderText("Oracle data loaded")
-
+        
       }
     }
     
@@ -555,36 +561,44 @@ server <- function(input, output, session) {
   }
   dataSizeChecker<-function(df){
     if (debug) print("dataSizeChecker")
-    # if (is.null(df))return(NULL)
+     if (is.null(df))return(NULL)
     res = "OK"
     nrowData = nrow(df)
     dataSizeMB = as.numeric(sub(pattern = " Mb",x = format(object.size(df),units = "Mb"),replacement = ""))
-    if (is.null(nrowData)){
-      output$hugeDataWarn <- renderUI({NULL})
-    }else if (dataSizeMB > 100){
-      #limit exceeded
-      output$hugeDataWarn <-
-        renderUI({
-          #these tags are here instead of UI so they can be on one line
-          div(id="visFail", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's too much for this app. Please filter the data in r to create a smaller r object")
-          )
-        })
-      res = "fail"
-    }else if (dataSizeMB > 20){
-      #upper limit warning
-      output$hugeDataWarn <-
-        renderUI({
-          #these tags are here instead of UI so they can be on one line
-          div(id="visWarn", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's a lot for this app.  Consider filtering the data in r to create a smaller r object.")
-          )
-        })
-      
-      res = "warn"
-    }else{
-      output$hugeDataWarn <- renderUI({NULL})
-    }
+     if (is.null(nrowData)){
+       output$hugeDataWarn <- renderUI({NULL})
+     }else if (dataSizeMB > 100){
+    #   #limit exceeded
+       print(values$dataORButt)
+        if (!is.null(values$dataORButt)){
+          output$hugeDataWarn <- renderUI({NULL})
+        }else{
+       
+       output$hugeDataWarn <-
+         renderUI({
+           #these tags are here instead of UI so they can be on one line
+           div(id="visWarn", 
+               paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's too much for this app. Please filter the data in r to create a smaller r object"),
+               actionButton(inputId = 'dataORButt', label = paste0("Thanks, 'Dad', do it!"), icon = icon('layer-group'))
+           )
+         })
+}
+       res = "fail"
+     }else if (dataSizeMB > 20){
+       #upper limit warning
+       output$hugeDataWarn <-
+         renderUI({
+           #these tags are here instead of UI so they can be on one line
+           div(id="visWarn", paste("Your data selection has ",nrowData," rows (i.e. ",dataSizeMB," Mb).  That's a lot for this app.  Consider filtering the data in r to create a smaller r object.")
+           )
+         })
+       res = "warn"
+     }else{
+       output$hugeDataWarn <- renderUI({NULL})
+     }
     return(res)
   }
+  
   facetChecker<-function(nfacets = 1){
     if (debug) print("facetChecker")
     res = "OK"
@@ -619,17 +633,21 @@ server <- function(input, output, session) {
     if (is.null(thisData))return(1)
     thisData <-thisData[!thisData$QC_HIDDEN %in% TRUE,]
     nfacets = ifelse(input$facet == 'None',1,length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet])))
-    facetCheck = facetChecker(nfacets)
-    if (facetCheck=="warn")return(1)
     plotRows = ceiling(nfacets/plotCols )
-    plotHeight = plotRows*plotHeight
-    if (nfacets>values$limitPlots){
+    plotHeight = plotRows*plotHeight 
+    
+    facetCheck = facetChecker(nfacets)
+    if (facetCheck=="OK") {
+      return(plotHeight)
+    }else if (facetCheck=="warn"){
       if (is.null(input$facetOverride)){
-        plotHeight = 1
+        return(1)
+      }else{
+        return(1)
       }
-    }
-    return(plotHeight)
-  })
+    } 
+      
+    })
   
   makeSelDataTable<-function(){
     if (debug) print("makeSelDataTable")
@@ -662,13 +680,13 @@ server <- function(input, output, session) {
       thePlot <- thePlot + geom_smooth(method=conf, fill="red", color="red")
     }
     
-    if(!facet == 'None') {
+    if(facet != 'None') {
       thePlot <- thePlot + facet_wrap(as.formula(paste('~', facet)),ncol=plotCols)
     }
     thePlot <- thePlot + theme(legend.position="top",text = element_text(size=15)) + coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = TRUE)
     return(thePlot)
   }
-
+  
   output$distPlot <- renderPlot(width = "auto", height =function(){getPlotHeight()},{
     req(input$xaxis, input$yaxis)
     thisData <- values$currentdataObj
@@ -681,9 +699,14 @@ server <- function(input, output, session) {
     input$unhide
     input$filtRem
     input$filtApply
-    if (dataSizeChecker(thisData)=="fail")return(NULL)
+    input$dataORButt
+    print(values$dataORButt)
+    if (dataSizeChecker(thisData)=="fail" & is.null(values$dataORButt) )return(NULL)
+    #& is.null(input$dataORButt)
     nfacets = ifelse(input$facet == 'None',1,length(unique(thisData[which(!is.na(thisData[,input$xaxis]) & !is.na(thisData[,input$yaxis])),][,input$facet])))
     if (facetChecker(nfacets)=="warn")return(NULL)
+    
+    
     makePlot(thedf =thisData,  conf = input$plotchk,  facet= input$facet)
   })
   
@@ -693,4 +716,5 @@ server <- function(input, output, session) {
     res = makeSelDataTable()
     return(res)
   })
-}
+  }
+  
