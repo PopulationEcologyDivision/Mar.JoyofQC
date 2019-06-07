@@ -661,7 +661,7 @@ server <- function(input, output, session) {
                               xvar = input$xaxis,
                               yvar = input$yaxis)
     tableData = tableData[, !names(tableData) %in% c("QC_HIDDEN")] 
-    tableData = Mar.utils::drop_NA_cols(tableData)
+    tableData = Mar.utils::drop_cols(tableData, justDropNAs=TRUE)
     return(tableData)
   }
   
