@@ -48,7 +48,8 @@ server <- function(input, output, session) {
   }
   output$versionCheck <- renderUI(HTML(updMsg))
   
-  source("getHelp.R")
+  source("./scripts/getHelp.R", local = TRUE)
+
   
   output$getHelp<-renderUI({
     getHelp()
