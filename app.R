@@ -1,4 +1,4 @@
-
+setwd(".")
 ui = source('./ui.R', local = TRUE)$value
 
 server = function(input, output, session) {
