@@ -4,7 +4,7 @@ library(ggplot2)
 ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico")),
   theme = "styles.css",
   titlePanel(windowTitle = "Mar.JoyofQC"
-             , div(id="logodiv",img(src="logo.PNG", height=100, style="float:left;") 
+             , div(id="logodiv",img(src="logo.png", height=100, style="float:left;")
                    ,htmlOutput(outputId="versionCheck")
                    ,div(class="clearer")
              )
