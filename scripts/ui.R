@@ -2,9 +2,9 @@ library(shiny)
 library(ggplot2)
 
 ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico")),
-  theme = "styles.css",
+  theme = "img/styles.css",
   titlePanel(windowTitle = "Mar.JoyofQC"
-             , div(id="logodiv",img(src="logo.png", height=100, style="float:left;")
+             , div(id="logodiv",img(src="img/logo.png", height=100, style="float:left;")
                    ,htmlOutput(outputId="versionCheck")
                    ,div(class="clearer")
              )
@@ -50,8 +50,26 @@ ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico"
                                   tabPanel("QC",
                                            div(class = "sidebox",
                                                radioButtons(inputId = 'qcAction', label = "",
-                                                            choiceNames = list(icon('undo'),icon('thumbs-up'),icon('thumbs-down'),icon('eye-slash')),
-                                                            choiceValues = list("undo","good","bad","ugly"), selected = "bad", inline=T)
+                                                            choiceNames = list(icon('undo'),
+                                                                               icon('thumbs-up'),
+                                                                               icon('thumbs-down'),
+                                                                               icon('dice-one'),
+                                                                               icon('dice-two'),
+                                                                               icon('dice-three'),
+                                                                               icon('dice-four'),
+                                                                               icon('dice-five'),
+                                                                               icon('dice-six'),
+                                                                               icon('eye-slash')),
+                                                            choiceValues = list("undo",
+                                                                                "good",
+                                                                                "bad",
+                                                                                "cat1",
+                                                                                "cat2",
+                                                                                "cat3",
+                                                                                "cat4",
+                                                                                "cat5",
+                                                                                "cat6",
+                                                                                "ugly"), selected = "bad", inline=T)
                                                ,htmlOutput("selDet")
                                                ,div(id = "chk", checkboxInput("hideHandled", label = "Hide QC'd data",value = FALSE))
                                                ,div(class="clearer")

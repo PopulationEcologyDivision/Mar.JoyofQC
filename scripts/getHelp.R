@@ -21,7 +21,7 @@ of this stuff, and an outline of the app
 identified with numbers.  The sections are described below the 
 image.
 ")
-,img(src="02_map.png",style="width:600px;float:left;")
+,img(src="img/02_map.png",style="width:600px;float:left;")
 ,h4("Box #1")
 ,p("This is your plot area.  Depending on your selected facet options, at least 
 one plot will be shown here.  Plots here are always interactive - you can draw 
@@ -41,7 +41,7 @@ datasets.")
 and Saving data.  The tab for selecting/ displaying data is shown by default. Content of 
 the individual tabs is shown below.")
 ,h5("Data")
-,img(src="02_display.png",style="width:200px;float:left;border:1px solid black;")
+,img(src="img/02_display.png",style="width:200px;float:left;border:1px solid black;")
 ,p("This will be the only thing tool shown initially, and lets you choose which 
 dataset you want to look at (i.e. csv, rds, rdata, oracle, etc).")
 ,p("This (default) tab contains tools allowing you to decide how to plot your data.
@@ -55,7 +55,7 @@ result in a separate length vs weight plot for each species.")
  are  a variety of methods for doing this, and they are described ",a("here", href="https://ggplot2.tidyverse.org/reference/geom_smooth.html"),".") 
 ,div(class="clearer")
 ,h5("Filter")
-,img(src="03_filter.png",style="width:200px;float:left;border:1px solid black;")
+,img(src="img/03_filter.png",style="width:200px;float:left;border:1px solid black;")
 ,p("In this tab, you can identify a field by which you would like to filter your data.
 Once a field has been selected, a second box gets populated allowing you to select 
 from any of the values that appear in that field.  Modifications here will change 
@@ -63,7 +63,7 @@ which data is displayed (and available for QC).  Data that is not displayed stil
    and will still be present (retaining your QC efforts) in any saved files.")
 ,div(class="clearer")
 ,h5("QC")
-,img(src="04_QC.png",style="width:200px;float:left;border:1px solid black;")
+,img(src="img/04_QC.png",style="width:200px;float:left;border:1px solid black;")
 ,p("
 This box contains the options for QC'ing your data.  The first row of tools at the 
 top of the page work on the selected data, and allow you to apply a QC status to individual records.
@@ -80,7 +80,7 @@ The following actions can be applied to any selected data:")
 Most of the time, you will be working with your seletion, but sometimes it might be nice to able to easily work on all of the other data instead.")
 
 ,h5("Save")
-,img(src="05_Save.png",style="width:200px;float:left;border:1px solid black;")
+,img(src="img/05_Save.png",style="width:200px;float:left;border:1px solid black;")
 ,p("This tab shows buttons for saving your work.  There are 2, and they are slightly 
 different. '",icon('save')," Save QC info' saves ONLY the records you've interacted with (i.e. 
 set a status of 'good' or 'bad').  The idea is that if you're working with a large 
