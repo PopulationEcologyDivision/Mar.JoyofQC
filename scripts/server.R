@@ -5,7 +5,8 @@ server <- function(input, output, session) {
   plotCols = 3
   qcprompt = "QC Comment (optional)"
   debug = FALSE
-  Mar.JoyOfQC =  scan(file.path(dirname(getwd()),"version.txt" ),quiet = T)
+  # Mar.JoyOfQC =  scan(file.path(dirname(getwd()),"version.txt" ),quiet = T)
+  Mar.JoyOfQC =  scan(".\\version.txt",quiet = T)
 
   ovalues <- reactiveValues(
     thisCxn = NULL,
@@ -48,7 +49,7 @@ server <- function(input, output, session) {
   }
   output$versionCheck <- renderUI(HTML(updMsg))
 
-  source(file.path(getwd(), "getHelp.R"), local = TRUE)
+  source(file.path(getwd(), "scripts", "getHelp.R"), local = TRUE)
 
 
   output$getHelp<-renderUI({

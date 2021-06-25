@@ -1,6 +1,7 @@
 library(shiny)
 library(ggplot2)
 
+
 ui<-fluidPage(  #tags$head(tags$link(rel = "shortcut icon", href = "favicon.ico")),
   theme = "img/styles.css",
   titlePanel(windowTitle = "Mar.JoyofQC"
